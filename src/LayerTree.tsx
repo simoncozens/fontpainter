@@ -4,18 +4,12 @@ import Box from '@mui/material/Box';
 import TreeView from '@mui/lab/TreeView';
 import TreeItem, { TreeItemProps, treeItemClasses } from '@mui/lab/TreeItem';
 import Typography from '@mui/material/Typography';
-import MailIcon from '@mui/icons-material/Mail';
-import DeleteIcon from '@mui/icons-material/Delete';
-import Label from '@mui/icons-material/Label';
-import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
-import InfoIcon from '@mui/icons-material/Info';
-import ForumIcon from '@mui/icons-material/Forum';
-import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
-import { SvgIconProps } from '@mui/material/SvgIcon';
 import { Paint, SolidFill } from './Paints';
 import { PainterFont } from './Font';
+import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
+import { ButtonBase, Popover } from '@mui/material';
 
 declare module 'react' {
     interface CSSProperties {
@@ -31,6 +25,7 @@ type StyledTreeItemProps = TreeItemProps & {
     colorForDarkMode?: string;
     paint: Paint;
     font: PainterFont | null;
+    colorSetter: () => void;
 };
 
 const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
@@ -73,6 +68,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
         font: PainterFont,
         colorForDarkMode,
         bgColorForDarkMode,
+        colorSetter,
         ...other
     } = props;
 
@@ -81,6 +77,19 @@ function StyledTreeItem(props: StyledTreeItemProps) {
         '--tree-view-bg-color':
             theme.palette.mode !== 'dark' ? bgColor : bgColorForDarkMode,
     };
+    const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const colorBoxOpen = Boolean(anchorEl);
+    const [paintColor, setPaintColor] = React.useState(createColor((props.paint.fill as SolidFill).color));
+
+    const handleChange = (newValue: Color) => {
+        (props.paint.fill as SolidFill).color = "#" + newValue.hex;
+        setPaintColor(newValue);
+        console.log((props.paint.fill as SolidFill).color);
+        colorSetter();
+    }
 
     return (
         <StyledTreeItemRoot
@@ -93,7 +102,18 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                         pr: 0,
                     }}
                 >
-                    <Box sx={{ mr: 1, width: 20, height: 20, backgroundColor: (props.paint.fill as SolidFill).color }} />
+                    <Box sx={{ paddingRight: 2 }}>
+                        <ButtonBase onClick={handleClick}>
+                            <ColorButton color={paintColor} />
+                        </ButtonBase>
+                        <Popover
+                            open={colorBoxOpen}
+                            anchorEl={anchorEl}
+                            onClose={() => setAnchorEl(null)}
+                        >
+                            <ColorBox defaultValue={paintColor} onChange={handleChange} />
+                        </Popover>
+                    </Box>
                     <Typography variant="body2" sx={{ fontWeight: 'inherit', flexGrow: 1 }}>
                         {props.paint.label(props.font)}
                     </Typography>
@@ -122,7 +142,10 @@ export default function LayerTree(props: LayerTreeProps) {
             defaultEndIcon={<div style={{ width: 24 }} />}
             sx={{ height: 264, flexGrow: 1, maxWidth: 400, overflowY: 'auto' }}
         >
-            {props.paintLayers.map((p: Paint, i: number) => <StyledTreeItem nodeId={i.toString()} paint={p} font={props.font} />)}
+            {props.paintLayers.map((p: Paint, i: number) => <StyledTreeItem nodeId={i.toString()} paint={p} font={props.font} colorSetter={() => {
+                props.setPaintLayers(([] as Paint[]).concat(props.paintLayers));
+            }
+            } />)}
         </TreeView>
     );
 }

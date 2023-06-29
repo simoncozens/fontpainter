@@ -83,7 +83,6 @@ export class PainterFont {
         var unicode = null;
         // @ts-ignore
         let codepoints = this.fkFont._cmapProcessor.codePointsForGlyph(id);
-        console.log(glyph.name, codepoints);
         if (codepoints.length > 0) {
           unicode = codepoints[0]
         }
