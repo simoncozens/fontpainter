@@ -1,0 +1,43 @@
+{
+  "name": "fontpainter",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@emotion/styled": "latest",
+    "@mui/icons-material": "latest",
+    "@mui/lab": "^5.0.0-alpha.134",
+    "@mui/material": "latest",
+    "@mui/x-data-grid": "^6.9.0",
+    "@svgdotjs/svg.js": "^3.0.16",
+    "@types/fontkit": "^2.0.3",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "fontkit": "github:simoncozens/fontkit#COLRv1",
+    "mui-file-dropzone": "^4.0.2",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-scripts": "latest",
+    "typescript": "latest"
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "latest"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
