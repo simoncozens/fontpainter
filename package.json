@@ -20,7 +20,8 @@
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-scripts": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "fontwriter": "file:fontwriter/pkg"
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "latest"
