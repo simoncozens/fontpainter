@@ -6,6 +6,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import App from './App';
 import theme from './theme';
 import hbjs from "./hbjs";
+import { default as init } from 'fontwriter';
 
 const rootElement = document.getElementById('root');
 // const root = ReactDOM.createRoot(rootElement!);
@@ -20,8 +21,8 @@ fetch(`${process.env.PUBLIC_URL}/harfbuzz.wasm`)
     const hb = hbjs(results.instance); // Dirty but works
     window.harfbuzz = results.instance;
     window.hbjs = hb;
-
-
+    init()
+   }).then(() => {
     ReactDOM.render(
       <ThemeProvider theme={theme}>
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}

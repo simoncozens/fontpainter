@@ -42,16 +42,11 @@ function FontDrop(props: FontDropProps) {
             maxFileSize={5000000}
             open={props.open}
             onAdd={newFileObjs => {
-                console.log('onAdd', newFileObjs);
                 fc.setFont(new PainterFont(newFileObjs[0].data as string));
-                console.log(fc.font);
                 props.setOpen(false);
             }}
             onClose={() => props.setOpen(false)}
-            onSave={() => {
-                console.log('onSave', fileObjects);
-                props.setOpen(false);
-            }}
+            onSave={() => props.setOpen(false)}
             showPreviews={false}
         />
     );
@@ -60,6 +55,7 @@ function FontDrop(props: FontDropProps) {
 export default function TopMenu() {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const [dropDialogOpen, setDropDialogOpen] = React.useState(false);
+    const fc: FontContextType = React.useContext(FontContext);
     const open = Boolean(anchorEl);
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -72,6 +68,11 @@ export default function TopMenu() {
         setDropDialogOpen(true);
         setAnchorEl(null);
     };
+
+    const handleSave = () => {
+        fc.font?.download()
+        handleClose()
+    }
 
     return (
         <AppBar position="static">
@@ -95,7 +96,7 @@ export default function TopMenu() {
                     <MenuItem key={"Open"} onClick={openDropZone}>
                         Open
                     </MenuItem>
-                    <MenuItem key={"Save"} onClick={handleClose}>
+                    <MenuItem key={"Save"} onClick={handleSave}>
                         Save
                     </MenuItem>
                 </Menu>

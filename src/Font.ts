@@ -1,7 +1,10 @@
 import * as SVG from "@svgdotjs/svg.js";
+import * as fontwriter from "fontwriter";
+
 import { Font, create } from "fontkit";
 import { Paint, Palette, SolidFill } from "./Paints";
-import Directory from "./fontkit-bits/tables/directory";
+import { COLR } from "./fontkit-bits/tables/COLR";
+import CPAL from "./fontkit-bits/tables/CPAL";
 
 export interface Axis {
   min: number;
@@ -24,11 +27,22 @@ function base64ToUint8Array(base64: string) {
   return bytes;
 }
 
+function uint8ArrayToBase64(bytes: Uint8Array) {
+  let binary = "";
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i += 1) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+
 declare let window: any;
 
 export class PainterFont {
   base64: string;
   fontFace: string;
+  fontBlob: Uint8Array;
   hbFont: any;
   fkFont: Font;
   axes: Map<string, Axis>;
@@ -38,16 +52,16 @@ export class PainterFont {
 
   constructor(base64: string, faceIdx: number = 0) {
     let [_header, body] = base64.split(",", 2);
-    let fontBlob = base64ToUint8Array(body);
+    this.fontBlob = base64ToUint8Array(body);
     this.svgCache = new Map();
     this.base64 = base64;
     this.fontFace = `@font-face{font-family:"${name}"; src:url(${this.base64});}`;
     const { hbjs } = window;
-    const blob = hbjs.createBlob(fontBlob.buffer);
+    const blob = hbjs.createBlob(this.fontBlob.buffer);
     const face = hbjs.createFace(blob, faceIdx);
     this.hbFont = hbjs.createFont(face);
     this.axes = face.getAxisInfos();
-    this.fkFont = create(fontBlob as Buffer);
+    this.fkFont = create(this.fontBlob as Buffer);
     this.glyphInfoCache = [];
     this.paints = new Map();
     this.saveColr()
@@ -137,7 +151,7 @@ export class PainterFont {
     return svg;
   }
 
-  saveColr() {
+  saveColr() :[any, any] {
     // Ensure all paint layers exist
     var id = 0;
     while (id < this.fkFont.numGlyphs) {
@@ -187,16 +201,25 @@ export class PainterFont {
       varIndexMap: null,
       itemVariationStore: null
     }
-    console.log(colr)
-    // @ts-ignore
-    this.fkFont.COLR = colr
+    console.log(palette);
+    let cpal = palette.toOpenType();
+    console.log(cpal);
+    return [colr, cpal]
   }
 
-  repack(): Uint8Array {
-    var tables: any = {}
-    for (var tag of Object.keys(window.font.fkFont.directory.tables)) {
-      tables[tag] = window.font.fkFont[tag]
-    }
-    return Directory.toBuffer({ tables })
+  download() {
+    let [colr, cpal] = this.saveColr()
+    let colr_blob = COLR.toBuffer(colr)
+    let cpal_blob = CPAL.toBuffer(cpal)
+    let output = fontwriter.add_table(this.fontBlob, "COLR", colr_blob)
+    output = fontwriter.add_table(output, "CPAL", cpal_blob)
+    let datauri = `data:application/octet-stream;base64,${uint8ArrayToBase64(output)}`;
+    var element = document.createElement('a');
+    element.setAttribute('href', datauri);
+    element.setAttribute('download', "font.ttf");
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
   }
 }

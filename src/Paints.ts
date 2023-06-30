@@ -3,6 +3,22 @@ import { Matrix } from "@svgdotjs/svg.js";
 import { PainterFont } from './Font';
 import { Paint as OTPaint } from "./fontkit-bits/tables/COLR";
 
+function toRGBA(hex: string) {
+    hex = hex.charAt(0) === '#' ? hex.slice(1) : hex;
+    const isShort = (hex.length === 3 || hex.length === 4);
+    const twoDigitHexR = isShort ? `${hex.slice(0, 1)}${hex.slice(0, 1)}` : hex.slice(0, 2);
+    const twoDigitHexG = isShort ? `${hex.slice(1, 2)}${hex.slice(1, 2)}` : hex.slice(2, 4);
+    const twoDigitHexB = isShort ? `${hex.slice(2, 3)}${hex.slice(2, 3)}` : hex.slice(4, 6);
+    const twoDigitHexA = ((isShort ? `${hex.slice(3, 4)}${hex.slice(3, 4)}` : hex.slice(6, 8)) || 'ff');
+    console.log(twoDigitHexR, twoDigitHexG, twoDigitHexB)
+    return {
+      red: parseInt(twoDigitHexR,16),
+      green: parseInt(twoDigitHexG,16),
+      blue: parseInt(twoDigitHexB,16),
+      alpha: parseInt(twoDigitHexA,16),
+    }
+}
+
 export class Palette {
     colors: string[];
     constructor() {
@@ -16,6 +32,17 @@ export class Palette {
             index = this.colors.length - 1;
         }
         return index
+    }
+
+    toOpenType(): any {
+        return {
+            version: 0,
+            numPaletteEntries: this.colors.length,
+            numPalettes: 1,
+            numColorRecords: this.colors.length,
+            colorRecords: this.colors.map(toRGBA),
+            colorRecordIndices: [0]
+        }
     }
 }
 
@@ -153,7 +180,7 @@ export class Paint {
         let fillpaint = this.fill.toOpenType(palette);
         let glyphpaint = {
             version: 10,
-            glyphId: this.gid,
+            glyphID: this.gid,
             paint: fillpaint,
         }
         if (style == MatrixType.None) {
