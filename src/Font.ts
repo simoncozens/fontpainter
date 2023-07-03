@@ -1,4 +1,6 @@
 import * as SVG from "@svgdotjs/svg.js";
+import '@svgdotjs/svg.draggable.js'
+
 import * as fontwriter from "fontwriter";
 
 import { Font, create } from "fontkit";
@@ -120,12 +122,13 @@ export class PainterFont {
         let moveit = new SVG.Matrix();
         moveit = moveit.translate(300, 180);
         this.paints.set(gid, [
-          new Paint(1, new SolidFill("#000000", 1.0), new SVG.Matrix()),
-          new Paint(355, new SolidFill("#FF0000", 1.0), moveit),
+          new Paint(355, new SolidFill("#FF0000", 1.0), moveit, this),
+          new Paint(1, new SolidFill("#000000", 1.0), new SVG.Matrix(), this),
         ])
+        this.paints.get(gid)![1].locked = true
 
       } else {
-        let basicPaint = new Paint(gid, new SolidFill("#000000", 1.0), new SVG.Matrix());
+        let basicPaint = new Paint(gid, new SolidFill("#000000", 1.0), new SVG.Matrix(), this);
         this.paints.set(gid, [basicPaint])
       }
     }
@@ -135,23 +138,17 @@ export class PainterFont {
   renderPaints(paints: Paint[]): SVG.Svg {
     let svg = new SVG.Svg();
     let topgroup = svg.group();
-    for (let paint of paints) {
-      let thisglyph = topgroup.group();
-      const svgDoc = SVG.SVG(this.getSVG(paint.gid));
-      svgDoc.children().forEach((c) => thisglyph.add(c));
-
-      if (paint.fill instanceof SolidFill) {
-        thisglyph.attr({ "fill": paint.fill.color });
-        thisglyph.attr({ "fill-opacity": paint.fill.opacity.toString() });
-      }
-      thisglyph.transform(paint.matrix);
+    // Do them reversed (bottom to top)
+    for (var i = paints.length - 1; i >= 0; i--) {
+      paints[i].render()
+      paints[i].rendering.addTo(topgroup)
     }
     let matrix = new SVG.Matrix(1, 0, 0, -1, 0, 1000);
     topgroup.transform(matrix);
     return svg;
   }
 
-  saveColr() :[any, any] {
+  saveColr(): [any, any] {
     // Ensure all paint layers exist
     var id = 0;
     while (id < this.fkFont.numGlyphs) {
@@ -172,8 +169,9 @@ export class PainterFont {
           numLayers: paints.length,
           firstLayerIndex: layers.length
         }
-        for (let paint of paints) {
-          layers.push(paint.toOpenType(palette))
+        // Do them reversed (bottom to top)
+        for (var i = paints.length - 1; i >= 0; i--) {
+          layers.push(paints[i].toOpenType(palette))
         }
       }
       baseGlyphPaintRecords.push({
@@ -201,9 +199,7 @@ export class PainterFont {
       varIndexMap: null,
       itemVariationStore: null
     }
-    console.log(palette);
     let cpal = palette.toOpenType();
-    console.log(cpal);
     return [colr, cpal]
   }
 

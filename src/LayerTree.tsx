@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
+import Icon from '@mui/material/Icon';
 import TreeView from '@mui/lab/TreeView';
 import TreeItem, { TreeItemProps, treeItemClasses } from '@mui/lab/TreeItem';
 import Typography from '@mui/material/Typography';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
+import LockIcon from '@mui/icons-material/Lock';
 import { Paint, SolidFill } from './Paints';
 import { PainterFont } from './Font';
 import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
@@ -66,6 +68,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
         color,
         paint: Paint,
         font: PainterFont,
+        nodeId,
         colorForDarkMode,
         bgColorForDarkMode,
         colorSetter,
@@ -87,12 +90,13 @@ function StyledTreeItem(props: StyledTreeItemProps) {
     const handleChange = (newValue: Color) => {
         (props.paint.fill as SolidFill).color = "#" + newValue.hex;
         setPaintColor(newValue);
-        console.log((props.paint.fill as SolidFill).color);
         colorSetter();
     }
 
     return (
         <StyledTreeItemRoot
+            nodeId={nodeId}
+            key={nodeId}
             label={
                 <Box
                     sx={{
@@ -102,6 +106,16 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                         pr: 0,
                     }}
                 >
+                    <Box sx={{ paddingRight: 2 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 'inherit' }}>
+                            {nodeId}
+                        </Typography>
+                    </Box>
+                    <Box sx={{ paddingRight: 2 }}>
+                        <Icon>
+                            {props.paint.locked && <LockIcon />}
+                        </Icon>
+                    </Box>
                     <Box sx={{ paddingRight: 2 }}>
                         <ButtonBase onClick={handleClick}>
                             <ColorButton color={paintColor} />
@@ -115,7 +129,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                         </Popover>
                     </Box>
                     <Typography variant="body2" sx={{ fontWeight: 'inherit', flexGrow: 1 }}>
-                        {props.paint.label(props.font)}
+                        {props.paint.label}
                     </Typography>
                     <Typography variant="caption" sx={{ fontWeight: 'inherit' }}>
                         {props.paint.matrixLabel()}

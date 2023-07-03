@@ -2,6 +2,8 @@
 import { Matrix } from "@svgdotjs/svg.js";
 import { PainterFont } from './Font';
 import { Paint as OTPaint } from "./fontkit-bits/tables/COLR";
+import * as SVG from "@svgdotjs/svg.js";
+import '@svgdotjs/svg.draggable.js'
 
 function toRGBA(hex: string) {
     hex = hex.charAt(0) === '#' ? hex.slice(1) : hex;
@@ -12,10 +14,10 @@ function toRGBA(hex: string) {
     const twoDigitHexA = ((isShort ? `${hex.slice(3, 4)}${hex.slice(3, 4)}` : hex.slice(6, 8)) || 'ff');
     console.log(twoDigitHexR, twoDigitHexG, twoDigitHexB)
     return {
-      red: parseInt(twoDigitHexR,16),
-      green: parseInt(twoDigitHexG,16),
-      blue: parseInt(twoDigitHexB,16),
-      alpha: parseInt(twoDigitHexA,16),
+        red: parseInt(twoDigitHexR, 16),
+        green: parseInt(twoDigitHexG, 16),
+        blue: parseInt(twoDigitHexB, 16),
+        alpha: parseInt(twoDigitHexA, 16),
     }
 }
 
@@ -133,18 +135,21 @@ export class Paint {
     gid: number;
     fill: SolidFill | LinearGradientFill;
     matrix: Matrix;
+    locked: boolean = false;
+    rendering!: SVG.G
+    _font: PainterFont
 
-    constructor(gid: number, fill: SolidFill | LinearGradientFill, matrix: Matrix) {
+    constructor(gid: number, fill: SolidFill | LinearGradientFill, matrix: Matrix, font: PainterFont) {
         this.gid = gid;
         this.fill = fill;
         this.matrix = matrix;
+        this._font = font;
+        this.render()
     }
 
-    label(font: PainterFont | null): string {
-        if (font) {
-            return font.glyphInfos()[this.gid].name;
-        }
-        else { return `gid${this.gid}` }
+
+    public get label(): string {
+        return this._font.glyphInfos()[this.gid].name;
     }
 
     matrixType(): MatrixType {
@@ -173,6 +178,19 @@ export class Paint {
         } else {
             return ` ${this.matrix.toString()}`;
         }
+    }
+
+    render() {
+        let thisglyph = new SVG.G();
+        const svgDoc = SVG.SVG(this._font.getSVG(this.gid));
+        svgDoc.children().forEach((c) => thisglyph.add(c));
+
+        if (this.fill instanceof SolidFill) {
+            thisglyph.attr({ "fill": this.fill.color });
+            thisglyph.attr({ "fill-opacity": this.fill.opacity.toString() });
+        }
+        thisglyph.transform(this.matrix);
+        this.rendering = thisglyph;
     }
 
     toOpenType(palette: Palette): any {
