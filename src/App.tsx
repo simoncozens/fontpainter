@@ -3,7 +3,6 @@ import { useState, useContext, createContext, Component } from 'react';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
-import ProTip from './ProTip';
 import Grid from '@mui/material/Grid';
 import { PainterFont } from './Font';
 import { Paint } from './Paints';
@@ -11,18 +10,9 @@ import { GlyphGrid } from './GlyphGrid';
 import TopMenu from './TopMenu';
 import LayerTree from './LayerTree';
 import EditScreen from './EditScreen';
-
-function Copyright() {
-  return (
-    <Typography variant="body2" color="text.secondary" align="center">
-      {'Copyright © '}
-      <Link color="inherit" href="https://mui.com/">
-        Your Website
-      </Link>{' '}
-      {new Date().getFullYear()}.
-    </Typography>
-  );
-}
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import CssBaseline from '@mui/material/CssBaseline';
 
 export type FontContextType = {
   font: PainterFont | null;
@@ -44,7 +34,20 @@ export const FontContext = createContext<FontContextType>({
 
 
 export default function App() {
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
 
+  const theme = React.useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode: prefersDarkMode ? 'dark' : 'light',
+        },
+      }),
+    [prefersDarkMode],
+  );
+  
+  
+  
   const [font, setFont] = useState<PainterFont | null>(null);
   const [selectedGid, selectGid] = useState<number | null>(null);
   const [selectedLayer, selectLayer] = useState<number | null>(null);
@@ -58,6 +61,10 @@ export default function App() {
   }
 
   return (
+    <ThemeProvider theme={theme}>
+    {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+    <CssBaseline />
+
     <FontContext.Provider value={{ font, setFont, selectedGid, selectGid, paintLayers, setPaintLayers }}>
       <Box sx={{ flexGrow: 1 }}>
         <TopMenu />
@@ -73,5 +80,6 @@ export default function App() {
         </Grid>
       </Box>
     </FontContext.Provider>
+    </ThemeProvider>
   );
 }

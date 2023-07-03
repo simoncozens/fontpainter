@@ -1,10 +1,7 @@
 import * as React from 'react';
 // import * as ReactDOM from 'react-dom/client';
 import ReactDOM from 'react-dom';
-import CssBaseline from '@mui/material/CssBaseline';
-import { ThemeProvider } from '@mui/material/styles';
 import App from './App';
-import theme from './theme';
 import hbjs from "./hbjs";
 import { default as init } from 'fontwriter';
 
@@ -24,11 +21,7 @@ fetch(`${process.env.PUBLIC_URL}/harfbuzz.wasm`)
     init()
    }).then(() => {
     ReactDOM.render(
-      <ThemeProvider theme={theme}>
-        {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-        <CssBaseline />
-        <App />
-      </ThemeProvider>,
+        <App />,
       rootElement
     );
   });

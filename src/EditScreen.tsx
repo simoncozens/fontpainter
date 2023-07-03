@@ -2,6 +2,7 @@ import * as React from 'react';
 import { PainterFont } from './Font';
 import { Paint } from './Paints';
 import * as SVG from "@svgdotjs/svg.js";
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 interface EditScreenProps {
     font: PainterFont | null,
@@ -20,6 +21,12 @@ function deleteAllChildren(e: any) {
 }
 
 export default function EditScreen(props: EditScreenProps) {
+    const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+    const backgroundColor = React.useMemo(
+      () => prefersDarkMode ? '#AAA' : 'white',
+      [prefersDarkMode],
+    );
+    
     const svg = React.useRef(document.createElement("div"));
     if (props.font && props.paintLayers.length > 0) {
         let svgEl = props.font.renderPaints(props.paintLayers);
@@ -41,7 +48,7 @@ export default function EditScreen(props: EditScreenProps) {
         svgEl.addTo(svg.current);
     }
     return (
-        <div className="svgwrapper">
+        <div className="svgwrapper" style={{backgroundColor }}>
             <div ref={svg} className="svgbox" onClick={() => props.selectLayer(null)}/>
         </div>
     );
