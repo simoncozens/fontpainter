@@ -4,6 +4,20 @@ import { PainterFont } from './Font';
 import { Paint as OTPaint } from "./fontkit-bits/tables/COLR";
 import * as SVG from "@svgdotjs/svg.js";
 import '@svgdotjs/svg.draggable.js'
+import './svg.resize.js'
+
+function getMouseDownFunc(eventName: string, el: any) {
+    return function (ev: any) {
+        ev.preventDefault()
+        ev.stopPropagation()
+
+        var x = ev.pageX || ev.touches[0].pageX
+        var y = ev.pageY || ev.touches[0].pageY
+        console.log("Got mouse down, calling " + eventName + " on " + el)
+        el.fire("testevent")
+        el.fire(eventName, { x: x, y: y, event: ev })
+    }
+}
 
 function toRGBA(hex: string) {
     hex = hex.charAt(0) === '#' ? hex.slice(1) : hex;
@@ -181,7 +195,7 @@ export class Paint {
         } else if (style == MatrixType.Translation) {
             return ` ${this.matrix.e}, ${this.matrix.f}`;
         } else {
-            return ` ${this.matrix.toString()}`;
+            return ` (${this.matrix.a},${this.matrix.b},${this.matrix.c},${this.matrix.d},${this.matrix.e},${this.matrix.f})`;
         }
     }
 
@@ -248,10 +262,11 @@ export class Paint {
             console.log(child, child.bbox())
             fullbbox = fullbbox.merge(child.bbox())
         }
-        let border = this.rendering.rect(
+        let wireframe = this.rendering.group().id("wireframe")
+        let border = wireframe.rect(
             this.rendering.width() as number + 10,
             this.rendering.height() as number + 10
-        ).id("wireframe")
+        )
         border.attr({
             "fill": "#00000000",
             "stroke": "black",
@@ -260,28 +275,107 @@ export class Paint {
             "x": fullbbox.x as number - 5,
             "y": fullbbox.y as number - 5
         })
-        this.rendering.css({ "outline": "1px dotted black" })
         if (this.locked) {
+            wireframe.css({ "cursor": "not-allowed" })
             return
         }
+        let dotStyle = {
+            "fill": "black",
+        }
+        let r1 = 10 * this.matrix.inverse().a
+        let r2 = 10 * this.matrix.inverse().d
+
+        let bl = wireframe.ellipse(r1, r2).attr({
+            "cx": fullbbox.x as number - 5,
+            "cy": fullbbox.y as number - 5,
+            ...dotStyle
+        })
+        let l = wireframe.ellipse(r1, r2).attr({
+            "cx": fullbbox.x as number - 5,
+            "cy": (fullbbox.y + fullbbox.y2) / 2 as number,
+            ...dotStyle
+        })
+        let br = wireframe.ellipse(r1, r2).attr({
+            "cx": fullbbox.x2 as number + 5,
+            "cy": fullbbox.y as number - 5,
+            ...dotStyle
+        })
+        let r = wireframe.ellipse(r1, r2).attr({
+            "cx": fullbbox.x2 as number + 5,
+            "cy": (fullbbox.y + fullbbox.y2) / 2 as number,
+            ...dotStyle
+        })
+        let tl = wireframe.ellipse(r1, r2).attr({
+            "cx": fullbbox.x as number - 5,
+            "cy": fullbbox.y2 as number + 5,
+            ...dotStyle
+        })
+        let tr = wireframe.ellipse(r1, r2).attr({
+            "cx": fullbbox.x2 as number + 5,
+            "cy": fullbbox.y2 as number + 5,
+            ...dotStyle
+        })
+        bl.css({ "cursor": "nesw-resize" })
+        tr.css({ "cursor": "nesw-resize" })
+        br.css({ "cursor": "nwse-resize" })
+        tl.css({ "cursor": "nwse-resize" })
+        l.css({ "cursor": "ew-resize" })
+        r.css({ "cursor": "ew-resize" })
         this.rendering.draggable(true)
+        // @ts-ignore
+        this.rendering.resize(true)
+        bl.on("mousedown.selection touchstart.selection", getMouseDownFunc("lt", this.rendering))
+        tl.on("mousedown.selection touchstart.selection", getMouseDownFunc("lb", this.rendering))
+        br.on("mousedown.selection touchstart.selection", getMouseDownFunc("rt", this.rendering))
+        tr.on("mousedown.selection touchstart.selection", getMouseDownFunc("rb", this.rendering))
+        l.on("mousedown.selection touchstart.selection", getMouseDownFunc("l", this.rendering))
+        r.on("mousedown.selection touchstart.selection", getMouseDownFunc("r", this.rendering))
         let startX: number;
         let startY: number;
+        let startWidth: number;
+        let startHeight: number;
         this.rendering.on("dragstart", (e: any) => {
             startX = e.detail.box.x
             startY = e.detail.box.y
         })
         this.rendering.on("dragend", (e: any) => {
-            let movedX = e.detail.box.x - startX
-            let movedY = e.detail.box.y - startY
+            let movedX = (e.detail.box.x - startX) * this.matrix.a
+            let movedY = (e.detail.box.y - startY) * this.matrix.d
             let el = e.detail.handler.el
             this.matrix = this.matrix.translate(movedX, movedY)
             el.fire("refreshtree")
+        })
+        this.rendering.on("resizestart", (e: any) => {
+            startX = this.rendering.bbox().x
+            startY = this.rendering.bbox().y
+            startWidth = this.rendering.bbox().width
+            startHeight = this.rendering.bbox().height
+        })
+
+        this.rendering.on("resizedone", (e: any) => {
+            let movedX = (this.rendering.bbox().x - startX)
+            let movedY = (this.rendering.bbox().y - startY)
+            let widthChange = this.rendering.bbox().width / startWidth
+            let heightChange = this.rendering.bbox().height / startHeight
+            let oldScaleOnly = (new Matrix()).scale(this.matrix.a, this.matrix.d)
+            let newScaleOnly = (new Matrix()).scale(widthChange, heightChange)
+            let pt = new SVG.Point(0, 0)
+            pt = pt.transform(this.matrix).transform(newScaleOnly.inverse())
+            console.log("InvPT:", pt)
+            console.log("MovedX", movedX)
+            console.log("MovedY", movedY)
+            this.matrix = this.matrix.multiply(newScaleOnly).translate(pt.x, pt.y)
+
+            console.log("Resize done", movedX, movedY)
+            this.rendering.fire("refreshtree")
         })
     }
 
     onDeselected() {
         this.rendering.draggable(false)
+        // @ts-ignore
+        this.rendering.resize(false)
+
         this.rendering.css({ "cursor": "pointer" })
         let wf = this.rendering.find("#wireframe")
         if (wf.length) {
