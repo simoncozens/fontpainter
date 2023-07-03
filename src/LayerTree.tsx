@@ -93,6 +93,12 @@ function StyledTreeItem(props: StyledTreeItemProps) {
         colorSetter();
     }
 
+    let [_, basepalette] = props.paint._font.saveColr();
+    let palette: Record<string, string> = {};
+    for (var colorString of basepalette.colors||[]) {
+        palette[colorString] = colorString;
+    }
+
     return (
         <StyledTreeItemRoot
             nodeId={nodeId}
@@ -125,7 +131,11 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                             anchorEl={anchorEl}
                             onClose={() => setAnchorEl(null)}
                         >
-                            <ColorBox defaultValue={paintColor} onChange={handleChange} />
+                            <ColorBox
+                                defaultValue={paintColor}
+                                onChange={handleChange}
+                                palette={palette}
+                            />
                         </Popover>
                     </Box>
                     <Typography variant="body2" sx={{ fontWeight: 'inherit', flexGrow: 1 }}>

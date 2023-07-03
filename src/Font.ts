@@ -199,12 +199,12 @@ export class PainterFont {
       varIndexMap: null,
       itemVariationStore: null
     }
-    let cpal = palette.toOpenType();
-    return [colr, cpal]
+    return [colr, palette]
   }
 
   download() {
-    let [colr, cpal] = this.saveColr()
+    let [colr, palette] = this.saveColr()
+    let cpal = palette.toOpenType();
     let colr_blob = COLR.toBuffer(colr)
     let cpal_blob = CPAL.toBuffer(cpal)
     let output = fontwriter.add_table(this.fontBlob, "COLR", colr_blob)
