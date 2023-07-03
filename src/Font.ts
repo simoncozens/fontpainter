@@ -163,6 +163,9 @@ export class PainterFont {
       let topPaint;
       if (paints.length == 1) {
         topPaint = paints[0].toOpenType(palette);
+        if (!topPaint) {
+          return;
+        }
       } else {
         topPaint = {
           version: 1,
@@ -171,7 +174,12 @@ export class PainterFont {
         }
         // Do them reversed (bottom to top)
         for (var i = paints.length - 1; i >= 0; i--) {
-          layers.push(paints[i].toOpenType(palette))
+          let thisPaint = paints[i].toOpenType(palette);
+          if (thisPaint === null) {
+            // Raise some error here
+          } else {
+            layers.push(thisPaint)
+          }
         }
       }
       baseGlyphPaintRecords.push({

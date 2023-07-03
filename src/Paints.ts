@@ -66,6 +66,8 @@ export class SolidFill {
     }
 }
 
+export let SolidBlackFill = new SolidFill("#000000", 1.0);
+
 export class GradientStop {
     color: string;
     offset: number;
@@ -132,14 +134,14 @@ enum MatrixType {
 }
 
 export class Paint {
-    gid: number;
+    gid: number | null;
     fill: SolidFill | LinearGradientFill;
     matrix: Matrix;
     locked: boolean = false;
     rendering!: SVG.G
     _font: PainterFont
 
-    constructor(gid: number, fill: SolidFill | LinearGradientFill, matrix: Matrix, font: PainterFont) {
+    constructor(gid: number | null, fill: SolidFill | LinearGradientFill, matrix: Matrix, font: PainterFont) {
         this.gid = gid;
         this.fill = fill;
         this.matrix = matrix;
@@ -149,6 +151,9 @@ export class Paint {
 
 
     public get label(): string {
+        if (this.gid == null) {
+            return "<None>"
+        }
         return this._font.glyphInfos()[this.gid].name;
     }
 
@@ -157,7 +162,7 @@ export class Paint {
             return MatrixType.None
         }
         if (this.matrix.a == 1 && this.matrix.b == 0 && this.matrix.c == 0 && this.matrix.d == 1) {
-            return MatrixType.Transform
+            return MatrixType.Translation
         }
         if (this.matrix.b == 0 && this.matrix.c == 0 && this.matrix.e == 0 && this.matrix.f == 0) {
             if (this.matrix.a == this.matrix.d) {
@@ -166,7 +171,7 @@ export class Paint {
                 return MatrixType.ScaleNonUniform;
             }
         }
-        return MatrixType.Translation;
+        return MatrixType.Transform;
     }
 
     matrixLabel(): string {
@@ -181,19 +186,24 @@ export class Paint {
     }
 
     render() {
-        let thisglyph = new SVG.G();
+        this.rendering = new SVG.G();
+        if (this.gid == null) {
+            return;
+        }
         const svgDoc = SVG.SVG(this._font.getSVG(this.gid));
-        svgDoc.children().forEach((c) => thisglyph.add(c));
+        svgDoc.children().forEach((c) => this.rendering.add(c));
 
         if (this.fill instanceof SolidFill) {
-            thisglyph.attr({ "fill": this.fill.color });
-            thisglyph.attr({ "fill-opacity": this.fill.opacity.toString() });
+            this.rendering.attr({ "fill": this.fill.color });
+            this.rendering.attr({ "fill-opacity": this.fill.opacity.toString() });
         }
-        thisglyph.transform(this.matrix);
-        this.rendering = thisglyph;
+        this.rendering.transform(this.matrix);
     }
 
     toOpenType(palette: Palette): any {
+        if (this.gid == null) {
+            return
+        }
         let style = this.matrixType();
         let fillpaint = this.fill.toOpenType(palette);
         let glyphpaint = {
