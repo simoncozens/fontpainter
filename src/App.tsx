@@ -47,10 +47,12 @@ export default function App() {
 
   const [font, setFont] = useState<PainterFont | null>(null);
   const [selectedGid, selectGid] = useState<number | null>(null);
+  const [selectedLayer, selectLayer] = useState<number | null>(null);
   const [paintLayers, setPaintLayers] = useState<Paint[]>([]);
   function doSelectGid(gid: React.SetStateAction<number | null>) {
     if (font && gid) {
       setPaintLayers(font.getPaintLayers(gid as number));
+      selectLayer(null);
       selectGid(gid);
     }
   }
@@ -63,10 +65,10 @@ export default function App() {
         <Grid container spacing={2}>
           <Grid item xs={4}>
             <GlyphGrid font={font} selectGid={doSelectGid} />
-            <LayerTree font={font} paintLayers={paintLayers} setPaintLayers={setPaintLayers} />
+            <LayerTree font={font} selectLayer={selectLayer} selectedLayer={selectedLayer} paintLayers={paintLayers} setPaintLayers={setPaintLayers} />
           </Grid>
           <Grid item xs={8}>
-            <EditScreen font={font} paintLayers={paintLayers} setPaintLayers={setPaintLayers} />
+            <EditScreen font={font} selectLayer={selectLayer} selectedLayer={selectedLayer} paintLayers={paintLayers} setPaintLayers={setPaintLayers} />
           </Grid>
         </Grid>
       </Box>

@@ -6,7 +6,9 @@ import * as SVG from "@svgdotjs/svg.js";
 interface EditScreenProps {
     font: PainterFont | null,
     paintLayers: Paint[],
-    setPaintLayers: React.Dispatch<React.SetStateAction<Paint[]>>;
+    setPaintLayers: React.Dispatch<React.SetStateAction<Paint[]>>,
+    selectLayer: React.Dispatch<React.SetStateAction<number | null>>,
+    selectedLayer: number | null,
 }
 
 function deleteAllChildren(e: any) {
@@ -18,22 +20,29 @@ function deleteAllChildren(e: any) {
 }
 
 export default function EditScreen(props: EditScreenProps) {
-    if (!props.font || props.paintLayers.length == 0) {
-        return (
-            <svg>
-            </svg>
-        );
-    }
-    let svgEl = props.font.renderPaints(props.paintLayers);
-
     const svg = React.useRef(document.createElement("div"));
-    deleteAllChildren(svg.current);
-    svgEl.width(1000);
-    svgEl.height(1000);
-    svgEl.addTo(svg.current);
+    if (props.font && props.paintLayers.length > 0) {
+        let svgEl = props.font.renderPaints(props.paintLayers);
+        if (props.selectedLayer != null) {
+            props.paintLayers[props.selectedLayer].onSelected();
+        }
+        props.paintLayers.forEach((layer: Paint, index: number) => {
+            layer.rendering.on("click", () => {
+                props.selectLayer(index);
+            })
+            layer.rendering.on("refreshtree", () => {
+                props.setPaintLayers([...props.paintLayers]);
+            })
+        })
+        console.log("Rendered ",svgEl)
+        deleteAllChildren(svg.current);
+        svgEl.width(1000);
+        svgEl.height(1000);
+        svgEl.addTo(svg.current);
+    }
     return (
         <div className="svgwrapper">
-            <div ref={svg} className="svgbox" />
+            <div ref={svg} className="svgbox" onClick={() => props.selectLayer(null)}/>
         </div>
     );
 

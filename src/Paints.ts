@@ -206,6 +206,58 @@ export class Paint {
                 }
             }
         }
+    }
 
+    onSelected() {
+        if (this.rendering.find("#wireframe").length) {
+            return
+        }
+        // @ts-ignore
+        console.log("Selecting", this)
+        this.rendering.css({ "cursor": "move" })
+        let fullbbox = this.rendering.bbox()
+        for (var child of this.rendering.children()) {
+            console.log(child, child.bbox())
+            fullbbox = fullbbox.merge(child.bbox())
+        }
+        let border = this.rendering.rect(
+            this.rendering.width() as number + 10,
+            this.rendering.height() as number + 10
+        ).id("wireframe")
+        border.attr({
+            "fill": "#00000000",
+            "stroke": "black",
+            "stroke-width": 1,
+            "stroke-dasharray": "5,5",
+            "x": fullbbox.x as number - 5,
+            "y": fullbbox.y as number - 5
+        })
+        this.rendering.css({ "outline": "1px dotted black" })
+        if (this.locked) {
+            return
+        }
+        this.rendering.draggable(true)
+        let startX: number;
+        let startY: number;
+        this.rendering.on("dragstart", (e: any) => {
+            startX = e.detail.box.x
+            startY = e.detail.box.y
+        })
+        this.rendering.on("dragend", (e: any) => {
+            let movedX = e.detail.box.x - startX
+            let movedY = e.detail.box.y - startY
+            let el = e.detail.handler.el
+            this.matrix = this.matrix.translate(movedX, movedY)
+            el.fire("refreshtree")
+        })
+    }
+
+    onDeselected() {
+        this.rendering.draggable(false)
+        this.rendering.css({ "cursor": "pointer" })
+        let wf = this.rendering.find("#wireframe")
+        if (wf.length) {
+            wf[0].remove()
+        }
     }
 }

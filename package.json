@@ -8,11 +8,13 @@
     "@mui/lab": "^5.0.0-alpha.134",
     "@mui/material": "^5.2.2",
     "@mui/x-data-grid": "^6.9.0",
+    "@svgdotjs/svg.draggable.js": "^3.0.3",
     "@svgdotjs/svg.js": "^3.0.16",
     "@types/fontkit": "^2.0.3",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "fontkit": "github:simoncozens/fontkit#COLRv1",
+    "fontwriter": "file:fontwriter/pkg",
     "material-ui-popup-state": "^1.7.1",
     "mui-color": "^2.0.0-beta.2",
     "mui-file-dropzone": "^4.0.2",
@@ -20,8 +22,7 @@
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-scripts": "latest",
-    "typescript": "latest",
-    "fontwriter": "file:fontwriter/pkg"
+    "typescript": "latest"
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "latest"

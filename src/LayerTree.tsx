@@ -130,17 +130,32 @@ function StyledTreeItem(props: StyledTreeItemProps) {
 
 interface LayerTreeProps {
     font: PainterFont | null,
+    selectLayer: React.Dispatch<React.SetStateAction<number | null>>,
+    selectedLayer: number | null,
     paintLayers: Paint[],
     setPaintLayers: React.Dispatch<React.SetStateAction<Paint[]>>;
 }
 
 export default function LayerTree(props: LayerTreeProps) {
+    function nodeSelect(event: React.SyntheticEvent, nodeIds: Array<string> | string) {
+        let selectedIndex = parseInt(nodeIds as string, 10);
+        for (let i = 0; i < props.paintLayers.length; i++) {
+            if (i == selectedIndex) {
+                props.paintLayers[i].onSelected()
+            } else {
+                props.paintLayers[i].onDeselected()
+            }
+        }
+        props.selectLayer(selectedIndex)
+    }
     return (
         <TreeView
             defaultCollapseIcon={<ArrowDropDownIcon />}
             defaultExpandIcon={<ArrowRightIcon />}
             defaultEndIcon={<div style={{ width: 24 }} />}
-            sx={{ height: 264, flexGrow: 1, maxWidth: 400, overflowY: 'auto' }}
+            onNodeSelect={nodeSelect}
+            selected={props.selectedLayer?.toString() || ""}
+            sx={{ height: 264, flexGrow: 1, overflowY: 'auto' }}
         >
             {props.paintLayers.map((p: Paint, i: number) => <StyledTreeItem nodeId={i.toString()} paint={p} font={props.font} colorSetter={() => {
                 props.setPaintLayers(([] as Paint[]).concat(props.paintLayers));
