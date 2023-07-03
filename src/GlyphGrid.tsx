@@ -1,4 +1,6 @@
+import { Paper, Typography } from '@mui/material';
 import { PainterFont } from './Font';
+import { Box } from '@mui/system';
 import { DataGrid, GridRowsProp, GridColDef, GridValueFormatterParams } from '@mui/x-data-grid';
 import * as React from 'react';
 
@@ -26,15 +28,17 @@ export function GlyphGrid(props: GlyphGridProps) {
         rows = props.font.glyphInfos() as unknown as GridRowsProp[];
     }
     return (
-        <div style={{ height: 300, width: '100%' }}>
+        <Paper elevation={2} sx={{ width: '100%', p: 0.5, m: 1 }}>
+            <Typography variant="h6"  sx={{ p: 1}}>Glyphs</Typography>
             <DataGrid
                 rows={rows}
                 columns={columns}
                 hideFooterSelectedRowCount={true}
+                style={{height: 300 }}
                 onRowClick={(params, event, details) => {
                     props.selectGid(params.row.id);
                 }}
             />
-        </div>
+        </Paper>
     )
 }
