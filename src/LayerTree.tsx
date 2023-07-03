@@ -7,11 +7,20 @@ import TreeItem, { TreeItemProps, treeItemClasses } from '@mui/lab/TreeItem';
 import Typography from '@mui/material/Typography';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
+import NoteAddIcon from '@mui/icons-material/NoteAdd';
+import DeleteIcon from '@mui/icons-material/Delete';
 import LockIcon from '@mui/icons-material/Lock';
-import { Paint, SolidFill } from './Paints';
-import { PainterFont } from './Font';
+import { Paint, SolidFill, SolidBlackFill } from './Paints';
+import { PainterFont, GlyphInfo } from './Font';
 import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
-import { ButtonBase, Popover } from '@mui/material';
+import { Autocomplete, ButtonBase, IconButton, Paper, Popover, TextField } from '@mui/material';
+import { Matrix } from '@svgdotjs/svg.js';
+import { createFilterOptions } from '@mui/material/Autocomplete';
+
+const filterOptions = createFilterOptions({
+  matchFrom: 'start',
+  stringify: (option: GlyphInfo) => option.name,
+});
 
 declare module 'react' {
     interface CSSProperties {
@@ -27,7 +36,7 @@ type StyledTreeItemProps = TreeItemProps & {
     colorForDarkMode?: string;
     paint: Paint;
     font: PainterFont | null;
-    colorSetter: () => void;
+    redrawPaints: () => void;
 };
 
 const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
@@ -69,9 +78,10 @@ function StyledTreeItem(props: StyledTreeItemProps) {
         paint: Paint,
         font: PainterFont,
         nodeId,
+        label,
         colorForDarkMode,
         bgColorForDarkMode,
-        colorSetter,
+        redrawPaints,
         ...other
     } = props;
 
@@ -81,6 +91,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
             theme.palette.mode !== 'dark' ? bgColor : bgColorForDarkMode,
     };
     const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
+    const [renaming, setRenaming] = React.useState<boolean>(false);
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
         setAnchorEl(event.currentTarget);
     };
@@ -90,13 +101,18 @@ function StyledTreeItem(props: StyledTreeItemProps) {
     const handleChange = (newValue: Color) => {
         (props.paint.fill as SolidFill).color = "#" + newValue.hex;
         setPaintColor(newValue);
-        colorSetter();
+        redrawPaints();
     }
 
     let [_, basepalette] = props.paint._font.saveColr();
     let palette: Record<string, string> = {};
     for (var colorString of basepalette.colors||[]) {
         palette[colorString] = colorString;
+    }
+
+    let toggleLocked = () => {
+        props.paint.locked = !props.paint.locked;
+        redrawPaints();
     }
 
     return (
@@ -108,19 +124,18 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                     sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        p: 0.5,
                         pr: 0,
                     }}
                 >
                     <Box sx={{ paddingRight: 2 }}>
                         <Typography variant="body2" sx={{ fontWeight: 'inherit' }}>
-                            {nodeId}
+                            {label}
                         </Typography>
                     </Box>
                     <Box sx={{ paddingRight: 2 }}>
-                        <Icon>
-                            {props.paint.locked && <LockIcon />}
-                        </Icon>
+                        <IconButton onClick={toggleLocked}>
+                            {props.paint.locked ? <LockIcon /> : <Icon />}
+                        </IconButton>
                     </Box>
                     <Box sx={{ paddingRight: 2 }}>
                         <ButtonBase onClick={handleClick}>
@@ -138,9 +153,31 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                             />
                         </Popover>
                     </Box>
-                    <Typography variant="body2" sx={{ fontWeight: 'inherit', flexGrow: 1 }}>
-                        {props.paint.label}
-                    </Typography>
+                    { renaming && props.font ?
+                        <Autocomplete
+                            options={props.font!.glyphInfos()}
+                            getOptionLabel={(option) => option.name}
+                            sx={{ fontWeight: 'inherit', flexGrow: 1 }}
+                            value={props.paint.gid ? props.font!.glyphInfos()[props.paint.gid] : null}
+                            renderInput={(params) => <TextField {...params} />}
+                            filterOptions={filterOptions}
+                            onChange={(evt, value) => {
+                                if (value) {
+                                    props.paint.gid = value.id;
+                                    setRenaming(false);
+                                    redrawPaints();
+                                }
+                            }}
+                        />
+                        :
+                        <Typography variant="body2" sx={{ fontWeight: 'inherit', flexGrow: 1 }} onDoubleClick={
+                            () => {
+                                setRenaming(true);
+                            }
+                        }>
+                            {props.paint.label}
+                        </Typography>
+                    }
                     <Typography variant="caption" sx={{ fontWeight: 'inherit' }}>
                         {props.paint.matrixLabel()}
                     </Typography>
@@ -173,19 +210,65 @@ export default function LayerTree(props: LayerTreeProps) {
         props.selectLayer(selectedIndex)
     }
     return (
-        <TreeView
-            defaultCollapseIcon={<ArrowDropDownIcon />}
-            defaultExpandIcon={<ArrowRightIcon />}
-            defaultEndIcon={<div style={{ width: 24 }} />}
-            onNodeSelect={nodeSelect}
-            selected={props.selectedLayer?.toString() || ""}
-            sx={{ height: 264, flexGrow: 1, overflowY: 'auto' }}
-        >
-            {props.paintLayers.map((p: Paint, i: number) => <StyledTreeItem nodeId={i.toString()} paint={p} font={props.font} colorSetter={() => {
-                props.setPaintLayers(([] as Paint[]).concat(props.paintLayers));
-            }
-            } />)}
-        </TreeView>
+        <Paper elevation={2} sx={{ width: '100%', p: 0.5, m:1 }}>
+            <Typography variant="h6" sx={{ p: 1 }}>Layers            
+            </Typography>
+            <TreeView
+                defaultCollapseIcon={<ArrowDropDownIcon />}
+                defaultExpandIcon={<ArrowRightIcon />}
+                defaultEndIcon={<div style={{ width: 24 }} />}
+                onNodeSelect={nodeSelect}
+                selected={props.selectedLayer?.toString() || ""}
+                sx={{ flexGrow: 1, overflowY: 'auto' }}
+            >
+                {props.paintLayers.map((p: Paint, i: number) => <StyledTreeItem
+                    nodeId={i.toString()}
+                    label={(props.paintLayers.length - i).toString()}
+                    paint={p} font={props.font} redrawPaints={() => {
+                    props.setPaintLayers(([] as Paint[]).concat(props.paintLayers));
+                }
+                } />)}
+            </TreeView>
+            <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        backgroundColor: '#aaaaaa11',
+                    }}
+                >
+                    <Box>
+                    <IconButton
+                        disabled={props.selectedLayer === null || props.paintLayers[props.selectedLayer]?.locked}
+                        onClick={ () => {
+                            if (props.selectedLayer !== null) {
+                                props.paintLayers.splice(props.selectedLayer, 1);
+                                props.setPaintLayers(([] as Paint[]).concat(props.paintLayers));
+                                props.selectLayer(null);
+                            }
+                        }}
+                    >
+                        <DeleteIcon />
+                    </IconButton>
+                    </Box>
+                    <Box>
+                    <IconButton disabled={!props.font}  onClick={
+                            () => {
+                                props.paintLayers.splice(0, 0, new Paint(
+                                        null,
+                                        SolidBlackFill,
+                                        new Matrix(),
+                                    props.font!
+                                ));
+                                props.setPaintLayers(([] as Paint[]).concat(props.paintLayers));
+                                props.selectLayer(0);
+                            }
+                        } >
+                        <NoteAddIcon/>
+                    </IconButton>
+                    </Box>
+                </Box>
+
+        </Paper>
     );
 }
 
