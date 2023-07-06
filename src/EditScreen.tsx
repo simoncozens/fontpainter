@@ -6,6 +6,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 
 interface EditScreenProps {
     font: PainterFont | null,
+    selectedGid: number | null,
     paintLayers: Paint[],
     setPaintLayers: React.Dispatch<React.SetStateAction<Paint[]>>,
     selectLayer: React.Dispatch<React.SetStateAction<number | null>>,
@@ -28,8 +29,8 @@ export default function EditScreen(props: EditScreenProps) {
     );
     
     const svg = React.useRef(document.createElement("div"));
-    if (props.font && props.paintLayers.length > 0) {
-        let svgEl = props.font.renderPaints(props.paintLayers);
+    if (props.font && props.paintLayers.length > 0 && props.selectedGid != null) {
+        let svgEl = props.font.renderPaints(props.paintLayers, props.selectedGid);
         if (props.selectedLayer != null) {
             props.paintLayers[props.selectedLayer].onSelected();
         }

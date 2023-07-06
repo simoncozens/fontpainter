@@ -4,7 +4,7 @@ import '@svgdotjs/svg.draggable.js'
 import * as fontwriter from "fontwriter";
 
 import { Font, create } from "fontkit";
-import { Paint, Palette, SolidFill } from "./Paints";
+import { Paint, Palette, SolidFill, SELF_GID } from "./Paints";
 import { COLR } from "./fontkit-bits/tables/COLR";
 import CPAL from "./fontkit-bits/tables/CPAL";
 
@@ -122,25 +122,25 @@ export class PainterFont {
         let moveit = new SVG.Matrix();
         moveit = moveit.translate(300, 180);
         this.paints.set(gid, [
-          new Paint(355, new SolidFill("#FF0000", 1.0), moveit, this),
-          new Paint(1, new SolidFill("#000000", 1.0), new SVG.Matrix(), this),
+          new Paint(355, new SolidFill("#FF0000", 1.0), moveit, this, 355),
+          new Paint(1, new SolidFill("#000000", 1.0), new SVG.Matrix(), this, 1),
         ])
         this.paints.get(gid)![1].locked = true
 
       } else {
-        let basicPaint = new Paint(gid, new SolidFill("#000000", 1.0), new SVG.Matrix(), this);
+        let basicPaint = new Paint(SELF_GID, new SolidFill("#000000", 1.0), new SVG.Matrix(), this, gid);
         this.paints.set(gid, [basicPaint])
       }
     }
     return this.paints.get(gid) as Paint[];
   }
 
-  renderPaints(paints: Paint[]): SVG.Svg {
+  renderPaints(paints: Paint[], selectedGid: number): SVG.Svg {
     let svg = new SVG.Svg();
     let topgroup = svg.group();
     // Do them reversed (bottom to top)
     for (var i = paints.length - 1; i >= 0; i--) {
-      paints[i].render()
+      paints[i].render(selectedGid)
       paints[i].rendering.addTo(topgroup)
     }
     let matrix = new SVG.Matrix(1, 0, 0, -1, 0, 1000);
@@ -162,7 +162,7 @@ export class PainterFont {
     this.paints.forEach((paints: Paint[], gid: number) => {
       let topPaint;
       if (paints.length == 1) {
-        topPaint = paints[0].toOpenType(palette);
+        topPaint = paints[0].toOpenType(palette, gid);
         if (!topPaint) {
           return;
         }
@@ -174,7 +174,7 @@ export class PainterFont {
         }
         // Do them reversed (bottom to top)
         for (var i = paints.length - 1; i >= 0; i--) {
-          let thisPaint = paints[i].toOpenType(palette);
+          let thisPaint = paints[i].toOpenType(palette, gid);
           if (thisPaint === null) {
             // Raise some error here
           } else {

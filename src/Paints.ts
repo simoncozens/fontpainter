@@ -6,6 +6,8 @@ import * as SVG from "@svgdotjs/svg.js";
 import '@svgdotjs/svg.draggable.js'
 import './svg.resize.js'
 
+export let SELF_GID = -1
+
 function getMouseDownFunc(eventName: string, el: any) {
     return function (ev: any) {
         ev.preventDefault()
@@ -155,16 +157,19 @@ export class Paint {
     rendering!: SVG.G
     _font: PainterFont
 
-    constructor(gid: number | null, fill: SolidFill | LinearGradientFill, matrix: Matrix, font: PainterFont) {
-        this.gid = gid;
+    constructor(storedGid: number | null, fill: SolidFill | LinearGradientFill, matrix: Matrix, font: PainterFont, contextGid: number) {
+        this.gid = storedGid;
         this.fill = fill;
         this.matrix = matrix;
         this._font = font;
-        this.render()
+        this.render(contextGid)
     }
 
 
     public get label(): string {
+        if (this.gid == SELF_GID) {
+            return "<Self>"
+        }
         if (this.gid == null) {
             return "<None>"
         }
@@ -199,12 +204,16 @@ export class Paint {
         }
     }
 
-    render() {
+    render(selectedGid: number) {
         this.rendering = new SVG.G();
         if (this.gid == null) {
             return;
         }
-        const svgDoc = SVG.SVG(this._font.getSVG(this.gid));
+        let gid = this.gid;
+        if (this.gid == SELF_GID) {
+            gid = selectedGid;
+        }
+        const svgDoc = SVG.SVG(this._font.getSVG(gid));
         svgDoc.children().forEach((c) => this.rendering.add(c));
 
         if (this.fill instanceof SolidFill) {
@@ -214,7 +223,7 @@ export class Paint {
         this.rendering.transform(this.matrix);
     }
 
-    toOpenType(palette: Palette): any {
+    toOpenType(palette: Palette, contextGid: number): any {
         if (this.gid == null) {
             return
         }
@@ -222,7 +231,7 @@ export class Paint {
         let fillpaint = this.fill.toOpenType(palette);
         let glyphpaint = {
             version: 10,
-            glyphID: this.gid,
+            glyphID: this.gid == SELF_GID ? contextGid : this.gid,
             paint: fillpaint,
         }
         if (style == MatrixType.None) {

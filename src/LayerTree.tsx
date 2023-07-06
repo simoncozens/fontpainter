@@ -257,7 +257,8 @@ export default function LayerTree(props: LayerTreeProps) {
                                         null,
                                         SolidBlackFill,
                                         new Matrix(),
-                                    props.font!
+                                    props.font!,
+                                    props.selectedGid!
                                 ));
                                 props.setPaintLayers(([] as Paint[]).concat(props.paintLayers));
                                 props.selectLayer(0);
