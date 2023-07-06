@@ -12,7 +12,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import LockIcon from '@mui/icons-material/Lock';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
-import { Paint, SolidFill, SolidBlackFill } from './Paints';
+import { Paint, SolidFill, SolidBlackFill, matrixLabel } from './Paints';
 import { PainterFont, GlyphInfo } from './Font';
 import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
 import { Autocomplete, ButtonBase, IconButton, Paper, Popover, TextField } from '@mui/material';
@@ -101,8 +101,9 @@ function StyledTreeItem(props: StyledTreeItemProps) {
     const [paintColor, setPaintColor] = React.useState(createColor((props.paint.fill as SolidFill).color));
 
     const handleChange = (newValue: Color) => {
+        console.log("Setting colour of paint", props.paint, " to ", newValue);
         (props.paint.fill as SolidFill).color = "#" + newValue.hex;
-        setPaintColor(newValue);
+        // setPaintColor(newValue);
         redrawPaints();
     }
 
@@ -141,7 +142,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                     </Box>
                     <Box sx={{ paddingRight: 2 }}>
                         <ButtonBase onClick={handleClick}>
-                            <ColorButton color={paintColor} />
+                            <ColorButton color={createColor((props.paint.fill as SolidFill).color)} />
                         </ButtonBase>
                         <Popover
                             open={colorBoxOpen}
@@ -163,6 +164,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                             value={props.paint.gid ? props.font!.glyphInfos()[props.paint.gid] : null}
                             renderInput={(params) => <TextField {...params} />}
                             filterOptions={filterOptions}
+                            autoHighlight={true}
                             onChange={(evt, value) => {
                                 if (value) {
                                     props.paint.gid = value.id;
@@ -181,7 +183,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                         </Typography>
                     }
                     <Typography variant="caption" sx={{ fontWeight: 'inherit' }}>
-                        {props.paint.matrixLabel()}
+                        {matrixLabel(props.paint.matrix)}
                     </Typography>
                 </Box>
             }
@@ -212,6 +214,7 @@ export default function LayerTree(props: LayerTreeProps) {
         }
         props.selectLayer(selectedIndex)
     }
+
     return (
         <Accordion sx={{ width: '100%' }} defaultExpanded={true}>
             <AccordionSummary
@@ -261,9 +264,9 @@ export default function LayerTree(props: LayerTreeProps) {
                     <IconButton disabled={!props.font}  onClick={
                             () => {
                                 props.paintLayers.splice(0, 0, new Paint(
-                                        null,
-                                        SolidBlackFill,
-                                        new Matrix(),
+                                    null,
+                                    SolidBlackFill(),
+                                    new Matrix(),
                                     props.font!,
                                     props.selectedGid!
                                 ));

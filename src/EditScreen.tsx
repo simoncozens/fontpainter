@@ -42,7 +42,6 @@ export default function EditScreen(props: EditScreenProps) {
                 props.setPaintLayers([...props.paintLayers]);
             })
         })
-        console.log("Rendered ",svgEl)
         deleteAllChildren(svg.current);
         svgEl.width(1000);
         svgEl.height(1000);

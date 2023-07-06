@@ -83,7 +83,7 @@ export class SolidFill {
     }
 }
 
-export let SolidBlackFill = new SolidFill("#000000", 1.0);
+export let SolidBlackFill = () => new SolidFill("#000000", 1.0);
 
 export class GradientStop {
     color: string;
