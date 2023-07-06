@@ -10,6 +10,8 @@ import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LockIcon from '@mui/icons-material/Lock';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import { Paint, SolidFill, SolidBlackFill } from './Paints';
 import { PainterFont, GlyphInfo } from './Font';
 import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
@@ -193,6 +195,7 @@ interface LayerTreeProps {
     font: PainterFont | null,
     selectLayer: React.Dispatch<React.SetStateAction<number | null>>,
     selectedLayer: number | null,
+    selectedGid: number | null,
     paintLayers: Paint[],
     setPaintLayers: React.Dispatch<React.SetStateAction<Paint[]>>;
 }
@@ -210,9 +213,13 @@ export default function LayerTree(props: LayerTreeProps) {
         props.selectLayer(selectedIndex)
     }
     return (
-        <Paper elevation={2} sx={{ width: '100%', p: 0.5, m:1 }}>
-            <Typography variant="h6" sx={{ p: 1 }}>Layers            
-            </Typography>
+        <Accordion sx={{ width: '100%' }} defaultExpanded={true}>
+            <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+            >
+                <Typography variant="h6">Layers</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
             <TreeView
                 defaultCollapseIcon={<ArrowDropDownIcon />}
                 defaultExpandIcon={<ArrowRightIcon />}
@@ -268,8 +275,8 @@ export default function LayerTree(props: LayerTreeProps) {
                     </IconButton>
                     </Box>
                 </Box>
-
-        </Paper>
+            </AccordionDetails>
+        </Accordion>
     );
 }
 
