@@ -333,7 +333,7 @@ export class Paint {
         r.css({ "cursor": "ew-resize" })
         this.rendering.draggable(true)
         // @ts-ignore
-        this.rendering.resize(true)
+        this.rendering.resize({ saveAspectRatio: true })
         bl.on("mousedown.selection touchstart.selection", getMouseDownFunc("lt", this.rendering))
         tl.on("mousedown.selection touchstart.selection", getMouseDownFunc("lb", this.rendering))
         br.on("mousedown.selection touchstart.selection", getMouseDownFunc("rt", this.rendering))
