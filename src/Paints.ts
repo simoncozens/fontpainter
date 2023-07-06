@@ -194,13 +194,14 @@ export class Paint {
     }
 
     matrixLabel(): string {
+        let max2dp = (num: number) => num.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 0 });
         let style = this.matrixType();
         if (style == MatrixType.None) {
             return "";
         } else if (style == MatrixType.Translation) {
-            return ` ${this.matrix.e}, ${this.matrix.f}`;
+            return ` ${Math.round(this.matrix.e)}, ${Math.round(this.matrix.f)}`;
         } else {
-            return ` (${this.matrix.a},${this.matrix.b},${this.matrix.c},${this.matrix.d},${this.matrix.e},${this.matrix.f})`;
+            return ` (${max2dp(this.matrix.a)},${max2dp(this.matrix.b)},${max2dp(this.matrix.c)},${max2dp(this.matrix.d)},${Math.round(this.matrix.e)},${Math.round(this.matrix.f)})`;
         }
     }
 
