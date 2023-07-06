@@ -8,7 +8,9 @@ import { Paint, Palette, SolidFill, SELF_GID } from "./Paints";
 import { COLR } from "./fontkit-bits/tables/COLR";
 import CPAL from "./fontkit-bits/tables/CPAL";
 
+import { NormalizedLocation, normalizeLocation, normalizeValue, UnnormalizedLocation } from "./varmodel";
 export interface Axis {
+  tag: string;
   min: number;
   max: number;
   default: number;
@@ -66,6 +68,7 @@ export class PainterFont {
     this.hbFont = hbjs.createFont(face);
     this.axes = face.getAxisInfos();
     for (let axis of Object.keys(this.axes)) {
+      this.axes[axis].tag = axis;
       this.variations[axis] = this.axes[axis].default;
     }
     this.fkFont = create(this.fontBlob as Buffer);
@@ -92,8 +95,10 @@ export class PainterFont {
 
   setVariations() {
     this.hbFont.setVariations(this.variations);
-    console.log("Setting variations")
-    console.log(this.variations)
+  }
+
+  get normalizedLocation(): NormalizedLocation {
+    return normalizeLocation(this.variations as UnnormalizedLocation, Object.values(this.axes));
   }
 
   getName(): string {

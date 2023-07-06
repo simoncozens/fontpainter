@@ -5,6 +5,7 @@ import { Paint as OTPaint } from "./fontkit-bits/tables/COLR";
 import * as SVG from "@svgdotjs/svg.js";
 import '@svgdotjs/svg.draggable.js'
 import './svg.resize.js'
+import { NormalizedLocation, VariationModel } from "./varmodel";
 
 export let SELF_GID = -1
 
@@ -149,10 +150,53 @@ enum MatrixType {
     Transform
 }
 
+function matrixType(matrix: Matrix): MatrixType {
+    if (matrix.a == 1 && matrix.b == 0 && matrix.c == 0 && matrix.d == 1 && matrix.e == 0 && matrix.f == 0) {
+        return MatrixType.None
+    }
+    if (matrix.a == 1 && matrix.b == 0 && matrix.c == 0 && matrix.d == 1) {
+        return MatrixType.Translation
+    }
+    if (matrix.b == 0 && matrix.c == 0 && matrix.e == 0 && matrix.f == 0) {
+        if (matrix.a == matrix.d) {
+            return MatrixType.ScaleUniform;
+        } else {
+            return MatrixType.ScaleNonUniform;
+        }
+    }
+    return MatrixType.Transform;
+}
+
+function mergeMatrixTypes(types: MatrixType[]): MatrixType {
+    let outtype = MatrixType.None;
+    for (let type of types) {
+        if (outtype == MatrixType.None) {
+            outtype = type
+        }
+        if (type != outtype) {
+            return MatrixType.Transform;
+        }
+    }
+    return outtype
+}
+
+
+export function matrixLabel(matrix: Matrix): string {
+    let max2dp = (num: number) => num.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+    let style = matrixType(matrix);
+    if (style == MatrixType.None) {
+        return "";
+    } else if (style == MatrixType.Translation) {
+        return ` ${Math.round(matrix.e)}, ${Math.round(matrix.f)}`;
+    } else {
+        return ` (${max2dp(matrix.a)},${max2dp(matrix.b)},${max2dp(matrix.c)},${max2dp(matrix.d)},${Math.round(matrix.e)},${Math.round(matrix.f)})`;
+    }
+}
+
 export class Paint {
     gid: number | null;
     fill: SolidFill | LinearGradientFill;
-    matrix: Matrix;
+    matrices: Map<string, Matrix>;
     locked: boolean = false;
     rendering!: SVG.G
     _font: PainterFont
@@ -160,9 +204,14 @@ export class Paint {
     constructor(storedGid: number | null, fill: SolidFill | LinearGradientFill, matrix: Matrix, font: PainterFont, contextGid: number) {
         this.gid = storedGid;
         this.fill = fill;
-        this.matrix = matrix;
+        this.matrices = new Map();
         this._font = font;
+        this.storeMatrix(matrix)
         this.render(contextGid)
+    }
+
+    storeMatrix(matrix: Matrix) {
+        this.matrices.set(JSON.stringify(this._font.normalizedLocation), matrix)
     }
 
 
@@ -176,33 +225,19 @@ export class Paint {
         return this._font.glyphInfos()[this.gid].name;
     }
 
-    matrixType(): MatrixType {
-        if (this.matrix.a == 1 && this.matrix.b == 0 && this.matrix.c == 0 && this.matrix.d == 1 && this.matrix.e == 0 && this.matrix.f == 0) {
-            return MatrixType.None
+    get matrix(): Matrix {
+        if (this.matrices.size == 1) {
+            return this.matrices.values().next().value;
         }
-        if (this.matrix.a == 1 && this.matrix.b == 0 && this.matrix.c == 0 && this.matrix.d == 1) {
-            return MatrixType.Translation
+        let masterLocations: NormalizedLocation[] = Array.from(this.matrices.keys()).map((x) => JSON.parse(x))
+        let varmodel = new VariationModel(masterLocations, Object.keys(this._font.axes));
+        let scalars = varmodel.getScalars(this._font.normalizedLocation);
+        let outmatrix = new Matrix();
+        for (var element of ["a", "b", "c", "d", "e", "f"]) {
+            let components: number[] = Array.from(this.matrices.values(), (matrix) => matrix[element]);
+            outmatrix[element] = varmodel.interpolateFromMastersAndScalars(components, scalars);
         }
-        if (this.matrix.b == 0 && this.matrix.c == 0 && this.matrix.e == 0 && this.matrix.f == 0) {
-            if (this.matrix.a == this.matrix.d) {
-                return MatrixType.ScaleUniform;
-            } else {
-                return MatrixType.ScaleNonUniform;
-            }
-        }
-        return MatrixType.Transform;
-    }
-
-    matrixLabel(): string {
-        let max2dp = (num: number) => num.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 0 });
-        let style = this.matrixType();
-        if (style == MatrixType.None) {
-            return "";
-        } else if (style == MatrixType.Translation) {
-            return ` ${Math.round(this.matrix.e)}, ${Math.round(this.matrix.f)}`;
-        } else {
-            return ` (${max2dp(this.matrix.a)},${max2dp(this.matrix.b)},${max2dp(this.matrix.c)},${max2dp(this.matrix.d)},${Math.round(this.matrix.e)},${Math.round(this.matrix.f)})`;
-        }
+        return outmatrix
     }
 
     render(selectedGid: number) {
@@ -228,7 +263,8 @@ export class Paint {
         if (this.gid == null) {
             return
         }
-        let style = this.matrixType();
+        // XXX Support variable matrices here
+        let style = matrixType(this.matrix);
         let fillpaint = this.fill.toOpenType(palette);
         let glyphpaint = {
             version: 10,
@@ -265,11 +301,9 @@ export class Paint {
             return
         }
         // @ts-ignore
-        console.log("Selecting", this)
         this.rendering.css({ "cursor": "move" })
         let fullbbox = this.rendering.bbox()
         for (var child of this.rendering.children()) {
-            console.log(child, child.bbox())
             fullbbox = fullbbox.merge(child.bbox())
         }
         let wireframe = this.rendering.group().id("wireframe")
@@ -352,7 +386,7 @@ export class Paint {
             let movedX = (e.detail.box.x - startX) * this.matrix.a
             let movedY = (e.detail.box.y - startY) * this.matrix.d
             let el = e.detail.handler.el
-            this.matrix = this.matrix.translate(movedX, movedY)
+            this.storeMatrix(this.matrix.translate(movedX, movedY))
             el.fire("refreshtree")
         })
         this.rendering.on("resizestart", (e: any) => {

@@ -17,7 +17,6 @@ export function Axes(props: AxesProps) {
     if (!axes || Object.keys(axes).length == 0) {
         return null;
     }
-    console.log(axes);
     return (
         <Accordion sx={{ width: '100%' }}>
             <AccordionSummary
