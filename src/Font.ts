@@ -47,7 +47,8 @@ export class PainterFont {
   fontBlob: Uint8Array;
   hbFont: any;
   fkFont: Font;
-  axes: Map<string, Axis>;
+  axes: Record<string, Axis>;
+  variations: Record<string, number>;
   svgCache: Map<number, any>;
   paints: Map<number, Paint[]>;
   glyphInfoCache: GlyphInfo[];
@@ -56,6 +57,7 @@ export class PainterFont {
     let [_header, body] = base64.split(",", 2);
     this.fontBlob = base64ToUint8Array(body);
     this.svgCache = new Map();
+    this.variations = {};
     this.base64 = base64;
     this.fontFace = `@font-face{font-family:"${name}"; src:url(${this.base64});}`;
     const { hbjs } = window;
@@ -63,6 +65,9 @@ export class PainterFont {
     const face = hbjs.createFace(blob, faceIdx);
     this.hbFont = hbjs.createFont(face);
     this.axes = face.getAxisInfos();
+    for (let axis of Object.keys(this.axes)) {
+      this.variations[axis] = this.axes[axis].default;
+    }
     this.fkFont = create(this.fontBlob as Buffer);
     this.glyphInfoCache = [];
     this.paints = new Map();
@@ -85,8 +90,10 @@ export class PainterFont {
     return svgText;
   }
 
-  setVariations(variations: Map<string, number>) {
-    this.hbFont.setVariations(variations);
+  setVariations() {
+    this.hbFont.setVariations(this.variations);
+    console.log("Setting variations")
+    console.log(this.variations)
   }
 
   getName(): string {

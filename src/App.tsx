@@ -10,6 +10,7 @@ import { GlyphGrid } from './GlyphGrid';
 import TopMenu from './TopMenu';
 import LayerTree from './LayerTree';
 import EditScreen from './EditScreen';
+import { Axes } from './Axes';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -71,11 +72,12 @@ export default function App() {
 
         <Grid container spacing={2}>
           <Grid item xs={4}>
-            <GlyphGrid font={font} selectGid={doSelectGid} />
-            <LayerTree font={font} selectLayer={selectLayer} selectedLayer={selectedLayer} paintLayers={paintLayers} setPaintLayers={setPaintLayers} />
+              <Axes font={font} refresh={() => setPaintLayers([...paintLayers])} />
+              <GlyphGrid font={font} selectGid={doSelectGid} />
+              <LayerTree font={font} selectedGid={selectedGid} selectLayer={selectLayer} selectedLayer={selectedLayer} paintLayers={paintLayers} setPaintLayers={setPaintLayers} />
           </Grid>
           <Grid item xs={8}>
-            <EditScreen font={font} selectLayer={selectLayer} selectedLayer={selectedLayer} paintLayers={paintLayers} setPaintLayers={setPaintLayers} />
+              <EditScreen font={font} selectedGid={selectedGid} selectLayer={selectLayer} selectedLayer={selectedLayer} paintLayers={paintLayers} setPaintLayers={setPaintLayers} />
           </Grid>
         </Grid>
       </Box>
