@@ -9,6 +9,15 @@ import { NormalizedLocation, VariationModel } from "./varmodel";
 
 export let SELF_GID = -1
 
+
+function deleteAllChildren(e: any) {
+    let child = e.lastElementChild;
+    while (child) {
+        e.removeChild(child);
+        child = e.lastElementChild;
+    }
+}
+
 function getMouseDownFunc(eventName: string, el: any) {
     return function (ev: any) {
         ev.preventDefault()
@@ -16,7 +25,6 @@ function getMouseDownFunc(eventName: string, el: any) {
 
         var x = ev.pageX || ev.touches[0].pageX
         var y = ev.pageY || ev.touches[0].pageY
-        console.log("Got mouse down, calling " + eventName + " on " + el)
         el.fire("testevent")
         el.fire(eventName, { x: x, y: y, event: ev })
     }
@@ -29,7 +37,6 @@ function toRGBA(hex: string) {
     const twoDigitHexG = isShort ? `${hex.slice(1, 2)}${hex.slice(1, 2)}` : hex.slice(2, 4);
     const twoDigitHexB = isShort ? `${hex.slice(2, 3)}${hex.slice(2, 3)}` : hex.slice(4, 6);
     const twoDigitHexA = ((isShort ? `${hex.slice(3, 4)}${hex.slice(3, 4)}` : hex.slice(6, 8)) || 'ff');
-    console.log(twoDigitHexR, twoDigitHexG, twoDigitHexB)
     return {
         red: parseInt(twoDigitHexR, 16),
         green: parseInt(twoDigitHexG, 16),
@@ -81,6 +88,9 @@ export class SolidFill {
             alpha: this.opacity
         }
     }
+    get description(): string {
+        return `SolidFill(${this.color}, ${this.opacity})`
+    }
 }
 
 export let SolidBlackFill = () => new SolidFill("#000000", 1.0);
@@ -106,6 +116,7 @@ export class GradientStop {
 }
 
 export class LinearGradientFill {
+    _element: SVG.Gradient | null = null;
     stops: GradientStop[];
     x0: number;
     y0: number;
@@ -140,6 +151,87 @@ export class LinearGradientFill {
             y2: this.y2,
         }
     }
+    get description(): string {
+        return `GradientFill`
+    }
+    toSVG(doc: SVG.Svg) {
+        let grad = doc.gradient("linear", (add) => {
+            for (let stop of this.stops) {
+                add.stop(stop.offset, stop.color)
+            }
+        })
+        grad.from(this.x0, this.y0)
+        grad.to(this.x1, this.y1)
+        grad.attr({ gradientUnits: "userSpaceOnUse" })
+        this._element = grad;
+        return grad
+    }
+
+    onSelected(rendering: SVG.G) {
+        let wireframe = rendering.group().id("wireframe-gradient")
+        let colorline: Record<number, string> = {}
+        for (var stop of this.stops) {
+            colorline[stop.offset] = stop.color
+        }
+        let start = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.x0, "cy": this.y0, "fill": colorline[0] || "black" })
+        let end = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.x1, "cy": this.y1, "fill": colorline[1] || "black" })
+        let control = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.x2, "cy": this.y2, "fill": "black" })
+        let line = wireframe.line(start.cx(), start.cy(), end.cx(), end.cy()).attr({ "stroke": "black", "stroke-width": 0.5 }).id("wireframe-line")
+        let balls = wireframe.group()
+        let makeballs = () => {
+            deleteAllChildren(balls)
+            for (let stop of this.stops) {
+                if (stop.offset == 0 || stop.offset == 1) {
+                    continue
+                }
+                balls.circle(15).attr({
+                    cx: this.x0 + (this.x1 - this.x0) * stop.offset,
+                    cy: this.y0 + (this.y1 - this.y0) * stop.offset,
+                    fill: stop.color
+                })
+            }
+        }
+        makeballs()
+        start.draggable(true)
+        start.css({ "cursor": "grab" })
+        end.draggable(true)
+        end.css({ "cursor": "grab" })
+        control.draggable(true)
+        control.css({ "cursor": "grab" })
+        start.on("dragend", (e: any) => {
+            rendering.fire("refreshtree")
+        })
+        start.on("dragmove", (e: any) => {
+            this.x0 = e.detail.box.x
+            this.y0 = e.detail.box.y
+            line.plot(this.x0, this.y0, this.x1, this.y1)
+            if (this._element) {
+                this._element.from(this.x0, this.y0)
+            }
+        })
+        end.on("dragend", (e: any) => {
+            this.x1 = e.detail.box.x
+            this.y1 = e.detail.box.y
+            rendering.fire("refreshtree")
+        })
+        end.on("dragmove", (e: any) => {
+            this.x1 = e.detail.box.x
+            this.y1 = e.detail.box.y
+            line.plot(this.x0, this.y0, this.x1, this.y1)
+            if (this._element) {
+                this._element.to(this.x1, this.y1)
+            }
+
+        })
+    }
+
+    onDeselected(rendering: SVG.G) {
+        let wf = rendering.find("#wireframe-gradient")
+        if (wf.length) {
+            wf[0].remove()
+        }
+    }
+
 }
 
 enum MatrixType {
@@ -240,7 +332,7 @@ export class Paint {
         return outmatrix
     }
 
-    render(selectedGid: number) {
+    render(selectedGid: number, header: SVG.Svg | null = null) {
         this.rendering = new SVG.G();
         if (this.gid == null) {
             return;
@@ -255,6 +347,9 @@ export class Paint {
         if (this.fill instanceof SolidFill) {
             this.rendering.attr({ "fill": this.fill.color });
             this.rendering.attr({ "fill-opacity": this.fill.opacity.toString() });
+        } else if (this.fill instanceof LinearGradientFill && header != null) {
+            let gradient = this.fill.toSVG(header)
+            this.rendering.attr({ "fill": gradient })
         }
         this.rendering.transform(this.matrix);
     }
@@ -301,15 +396,15 @@ export class Paint {
             return
         }
         // @ts-ignore
-        this.rendering.css({ "cursor": "move" })
         let fullbbox = this.rendering.bbox()
         for (var child of this.rendering.children()) {
             fullbbox = fullbbox.merge(child.bbox())
         }
         let wireframe = this.rendering.group().id("wireframe")
+        wireframe.css({ "cursor": "move" })
         let border = wireframe.rect(
-            this.rendering.width() as number + 10,
-            this.rendering.height() as number + 10
+            fullbbox.width as number + 10,
+            fullbbox.height as number + 10
         )
         border.attr({
             "fill": "#00000000",
@@ -365,65 +460,87 @@ export class Paint {
         tl.css({ "cursor": "nwse-resize" })
         l.css({ "cursor": "ew-resize" })
         r.css({ "cursor": "ew-resize" })
-        this.rendering.draggable(true)
+        wireframe.draggable(true)
         // @ts-ignore
-        this.rendering.resize({ saveAspectRatio: true })
-        bl.on("mousedown.selection touchstart.selection", getMouseDownFunc("lt", this.rendering))
-        tl.on("mousedown.selection touchstart.selection", getMouseDownFunc("lb", this.rendering))
-        br.on("mousedown.selection touchstart.selection", getMouseDownFunc("rt", this.rendering))
-        tr.on("mousedown.selection touchstart.selection", getMouseDownFunc("rb", this.rendering))
-        l.on("mousedown.selection touchstart.selection", getMouseDownFunc("l", this.rendering))
-        r.on("mousedown.selection touchstart.selection", getMouseDownFunc("r", this.rendering))
+        wireframe.resize({ saveAspectRatio: true })
+        bl.on("mousedown.selection touchstart.selection", getMouseDownFunc("lt", wireframe))
+        tl.on("mousedown.selection touchstart.selection", getMouseDownFunc("lb", wireframe))
+        br.on("mousedown.selection touchstart.selection", getMouseDownFunc("rt", wireframe))
+        tr.on("mousedown.selection touchstart.selection", getMouseDownFunc("rb", wireframe))
+        l.on("mousedown.selection touchstart.selection", getMouseDownFunc("l", wireframe))
+        r.on("mousedown.selection touchstart.selection", getMouseDownFunc("r", wireframe))
         let startX: number;
         let startY: number;
         let startWidth: number;
         let startHeight: number;
-        this.rendering.on("dragstart", (e: any) => {
+        wireframe.on("dragstart", (e: any) => {
             startX = e.detail.box.x
             startY = e.detail.box.y
         })
-        this.rendering.on("dragend", (e: any) => {
-            let movedX = (e.detail.box.x - startX) * this.matrix.a
-            let movedY = (e.detail.box.y - startY) * this.matrix.d
+        wireframe.on("dragmove", (e: any) => {
+            // Move any non-wireframe groups
+            let movedX = e.detail.box.x
+            let movedY = e.detail.box.y
+            let el = e.detail.handler.el
+            for (let child of el.parent().children()) {
+                if (child.id() != "wireframe") {
+                    child.move(movedX, movedY)
+                }
+            }
+        })
+
+        wireframe.on("dragend", (e: any) => {
+            let movedX = (e.detail.box.x - startX - 10) * this.matrix.a
+            let movedY = (e.detail.box.y - startY - 10) * this.matrix.d
             let el = e.detail.handler.el
             this.storeMatrix(this.matrix.translate(movedX, movedY))
             el.fire("refreshtree")
         })
-        this.rendering.on("resizestart", (e: any) => {
-            startX = this.rendering.bbox().x
-            startY = this.rendering.bbox().y
-            startWidth = this.rendering.bbox().width
-            startHeight = this.rendering.bbox().height
+        wireframe.on("resizestart", (e: any) => {
+            console.log("Resize start")
+            startX = wireframe.bbox().x
+            startY = wireframe.bbox().y
+            startWidth = wireframe.bbox().width
+            startHeight = wireframe.bbox().height
         })
 
-        this.rendering.on("resizedone", (e: any) => {
-            let movedX = (this.rendering.bbox().x - startX)
-            let movedY = (this.rendering.bbox().y - startY)
-            let widthChange = this.rendering.bbox().width / startWidth
-            let heightChange = this.rendering.bbox().height / startHeight
+        wireframe.on("resizedone", (e: any) => {
+            console.log("The previous matrix placed the box at ", startX, startY)
+            // Determine the untransformed start X and Y points of the box
+            let untransformed = new SVG.Point(startX, startY).transform(this.matrix.inverse())
+            console.log("The untransformed box was at ", untransformed.x, untransformed.y)
+            console.log("The new box is at ", wireframe.bbox().x, wireframe.bbox().y)
+            let movedX = (wireframe.bbox().x - startX)
+            let movedY = (wireframe.bbox().y - startY)
+            console.log("Having been moved by ", movedX, movedY)
+            let widthChange = wireframe.bbox().width / startWidth
+            let heightChange = wireframe.bbox().height / startHeight
             let oldScaleOnly = (new Matrix()).scale(this.matrix.a, this.matrix.d)
-            let newScaleOnly = (new Matrix()).scale(widthChange, heightChange)
-            let pt = new SVG.Point(0, 0)
-            pt = pt.transform(this.matrix).transform(newScaleOnly.inverse())
-            console.log("InvPT:", pt)
-            console.log("MovedX", movedX)
-            console.log("MovedY", movedY)
-            this.matrix = this.matrix.multiply(newScaleOnly).translate(pt.x, pt.y)
-
-            console.log("Resize done", movedX, movedY)
+            let newScaleOnly = oldScaleOnly.scale(widthChange, heightChange)
+            let retransformed = untransformed.transform(newScaleOnly)
+            console.log(`A scale only matrix would be ${newScaleOnly} and would transform the untransformed box to ${retransformed.x}, ${retransformed.y}`)
+            this.storeMatrix(newScaleOnly.translate(startX - retransformed.x - movedX, startY - retransformed.y - movedY))
+            let testPoint = untransformed.transform(this.matrix)
+            console.log(`Under the new matrix the point gets transformed to ${testPoint.x}, ${testPoint.y}`)
+            console.log("Resize done")
             this.rendering.fire("refreshtree")
         })
+
+        if (this.fill instanceof LinearGradientFill) {
+            this.fill.onSelected(this.rendering)
+        }
+
+
     }
 
     onDeselected() {
-        this.rendering.draggable(false)
-        // @ts-ignore
-        this.rendering.resize(false)
-
-        this.rendering.css({ "cursor": "pointer" })
         let wf = this.rendering.find("#wireframe")
+        this.rendering.css({ "cursor": "pointer" })
         if (wf.length) {
             wf[0].remove()
+        }
+        if (this.fill instanceof LinearGradientFill) {
+            this.fill.onDeselected(this.rendering)
         }
     }
 }

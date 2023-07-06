@@ -189,7 +189,25 @@ function StyledTreeItem(props: StyledTreeItemProps) {
             }
             style={styleProps}
             {...other}
-        />
+        >
+            <StyledTreeItemRoot nodeId={nodeId.toString() + ".fill"}
+                label={
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            pr: 0,
+                        }}
+                    >
+                        <Box sx={{ paddingRight: 2 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 'inherit' }}>
+                                Fill {props.paint.fill.description}
+                            </Typography>
+                        </Box>
+                    </Box>
+                } />
+
+        </StyledTreeItemRoot>
     );
 }
 
@@ -237,7 +255,8 @@ export default function LayerTree(props: LayerTreeProps) {
                     paint={p} font={props.font} redrawPaints={() => {
                     props.setPaintLayers(([] as Paint[]).concat(props.paintLayers));
                 }
-                } />)}
+                }>
+                </StyledTreeItem>)}
             </TreeView>
             <Box
                     sx={{

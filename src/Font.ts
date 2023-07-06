@@ -4,7 +4,7 @@ import '@svgdotjs/svg.draggable.js'
 import * as fontwriter from "fontwriter";
 
 import { Font, create } from "fontkit";
-import { Paint, Palette, SolidFill, SELF_GID } from "./Paints";
+import { Paint, Palette, SolidFill, SELF_GID, LinearGradientFill, GradientStop } from "./Paints";
 import { COLR } from "./fontkit-bits/tables/COLR";
 import CPAL from "./fontkit-bits/tables/CPAL";
 
@@ -130,12 +130,33 @@ export class PainterFont {
 
   getPaintLayers(gid: number): Paint[] {
     if (!this.paints.has(gid)) {
-      if (gid == 2) {
-        let moveit = new SVG.Matrix();
-        moveit = moveit.translate(300, 180);
+      if (gid == 1) {
         this.paints.set(gid, [
-          new Paint(355, new SolidFill("#FF0000", 1.0), moveit, this, 355),
-          new Paint(1, new SolidFill("#000000", 1.0), new SVG.Matrix(), this, 1),
+          new Paint(384, new LinearGradientFill([
+            new GradientStop("#C8FFFF", 0.0, 1.0),
+            new GradientStop("#968CFA", 0.25, 1.0),
+            new GradientStop("#FF00DC", 0.5, 1.0),
+            new GradientStop("#FF82AA", 0.75, 1.0),
+            new GradientStop("#FFDCDC", 1.0, 1.0),
+          ],
+            0.0, 0.0, 1000.0, 1000.0, 0.0, -50.0
+          ), new SVG.Matrix(), this, 384),
+          new Paint(383, new LinearGradientFill([
+            new GradientStop("#C8FFFF", 0.0, 1.0),
+            new GradientStop("#968CFA", 0.25, 1.0),
+            new GradientStop("#FF00DC", 0.5, 1.0),
+            new GradientStop("#FF82AA", 0.75, 1.0),
+            new GradientStop("#FFDCDC", 1.0, 1.0),
+          ],
+            0.0, 0.0, 1000.0, 1000.0, 0.0, -50.0
+          ), new SVG.Matrix(), this, 383),
+          new Paint(1, new LinearGradientFill([
+            new GradientStop("#641EFF", 0.0, 1.0),
+            new GradientStop("#E6E6C8", 0.5, 1.0),
+            new GradientStop("#FF1463", 1.0, 1.0),
+          ],
+            0.0, 0.0, 1000.0, 1000.0, 0.0, -50.0
+          ), new SVG.Matrix(), this, 1),
         ])
         this.paints.get(gid)![1].locked = true
 
@@ -152,7 +173,7 @@ export class PainterFont {
     let topgroup = svg.group();
     // Do them reversed (bottom to top)
     for (var i = paints.length - 1; i >= 0; i--) {
-      paints[i].render(selectedGid)
+      paints[i].render(selectedGid, svg)
       paints[i].rendering.addTo(topgroup)
     }
     let matrix = new SVG.Matrix(1, 0, 0, -1, 0, 1000);
