@@ -18,6 +18,7 @@ import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
 import { Autocomplete, ButtonBase, IconButton, Paper, Popover, TextField, Select, FormControl, MenuItem } from '@mui/material';
 import { Matrix } from '@svgdotjs/svg.js';
 import { createFilterOptions } from '@mui/material/Autocomplete';
+import { ContentCopy, ContentPaste } from '@mui/icons-material';
 
 const filterOptions = createFilterOptions({
   matchFrom: 'start',
@@ -222,7 +223,9 @@ interface LayerTreeProps {
     selectedLayer: number | null,
     selectedGid: number | null,
     paintLayers: Paint[],
-    setPaintLayers: React.Dispatch<React.SetStateAction<Paint[]>>;
+    setPaintLayers: React.Dispatch<React.SetStateAction<Paint[]>>,
+    clipboard: Paint[] | null,
+    setClipboard: React.Dispatch<React.SetStateAction<Paint[] | null>>,
 }
 
 export default function LayerTree(props: LayerTreeProps) {
@@ -349,6 +352,27 @@ export default function LayerTree(props: LayerTreeProps) {
                         } >
                         <NoteAddIcon/>
                     </IconButton>
+                    </Box>
+                    <Box>
+                        <IconButton disabled={props.paintLayers.length === 0}
+                            onClick={() => props.setClipboard(props.paintLayers.map(p => p.clone()))}
+                        >
+                            <ContentCopy />
+                        </IconButton>
+                    </Box>
+                    <Box>
+                        <IconButton disabled={!props.clipboard || !props.font || !props.selectedGid}
+                            onClick={() => {
+                                let clonedFromClipboard = props.clipboard!.map(p => p.clone())
+                                props.font!.paints.set(props.selectedGid!, clonedFromClipboard)
+                                console.log("Setting paints of ", props.selectedGid, " to")
+                                props.setPaintLayers(clonedFromClipboard)
+                                console.log(props.paintLayers)
+                                props.selectLayer(null);
+                            }}
+                        >
+                            <ContentPaste />
+                        </IconButton>
                     </Box>
                 </Paper>
             </AccordionDetails>

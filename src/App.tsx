@@ -22,6 +22,8 @@ export type FontContextType = {
   selectGid: React.Dispatch<React.SetStateAction<number | null>>;
   paintLayers: Paint[] | null,
   setPaintLayers: React.Dispatch<React.SetStateAction<Paint[]>>;
+  clipboard: Paint[] | null,
+  setClipboard: React.Dispatch<React.SetStateAction<Paint[] | null>>;
 };
 
 export const FontContext = createContext<FontContextType>({
@@ -30,7 +32,9 @@ export const FontContext = createContext<FontContextType>({
   selectedGid: null,
   selectGid: (f) => { },
   paintLayers: null,
-  setPaintLayers: (f) => { }
+  setPaintLayers: (f) => { },
+  clipboard: null,
+  setClipboard: (f) => { }
 });
 
 
@@ -53,6 +57,7 @@ export default function App() {
   const [selectedGid, selectGid] = useState<number | null>(null);
   const [selectedLayer, selectLayer] = useState<number | null>(null);
   const [paintLayers, setPaintLayers] = useState<Paint[]>([]);
+  const [clipboard, setClipboard] = useState<Paint[] | null>(null);
   function doSelectGid(gid: React.SetStateAction<number | null>) {
     if (font && gid) {
       setPaintLayers(font.getPaintLayers(gid as number));
@@ -66,7 +71,7 @@ export default function App() {
     {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
     <CssBaseline />
 
-    <FontContext.Provider value={{ font, setFont, selectedGid, selectGid, paintLayers, setPaintLayers }}>
+      <FontContext.Provider value={{ font, setFont, selectedGid, selectGid, paintLayers, setPaintLayers, clipboard, setClipboard }}>
       <Box sx={{ flexGrow: 1 }}>
         <TopMenu />
 
@@ -74,7 +79,7 @@ export default function App() {
           <Grid item xs={4}>
               <Axes font={font} refresh={() => setPaintLayers([...paintLayers])} />
               <GlyphGrid font={font} selectGid={doSelectGid} />
-              <LayerTree font={font} selectedGid={selectedGid} selectLayer={selectLayer} selectedLayer={selectedLayer} paintLayers={paintLayers} setPaintLayers={setPaintLayers} />
+              <LayerTree font={font} clipboard={clipboard} setClipboard={setClipboard} selectedGid={selectedGid} selectLayer={selectLayer} selectedLayer={selectedLayer} paintLayers={paintLayers} setPaintLayers={setPaintLayers} />
           </Grid>
           <Grid item xs={8}>
               <EditScreen font={font} selectedGid={selectedGid} selectLayer={selectLayer} selectedLayer={selectedLayer} paintLayers={paintLayers} setPaintLayers={setPaintLayers} />

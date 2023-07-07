@@ -146,6 +146,10 @@ export class SolidFill {
     get description(): string {
         return `SolidFill(${this.color}, ${this.opacity})`
     }
+
+    clone(): SolidFill {
+        return new SolidFill(this.color, this.opacity)
+    }
 }
 
 export let SolidBlackFill = () => new SolidFill("#000000", 1.0);
@@ -167,6 +171,10 @@ export class GradientStop {
             paletteIndex: palette.indexOf(this.color),
             alpha: this.opacity
         }
+    }
+
+    clone(): GradientStop {
+        return new GradientStop(this.color, this.offset, this.opacity)
     }
 }
 
@@ -287,6 +295,18 @@ export class LinearGradientFill {
         }
     }
 
+    clone(): LinearGradientFill {
+        let clonedstops = this.stops.map(s => s.clone())
+        return new LinearGradientFill(clonedstops,
+            this.x0,
+            this.y0,
+            this.x1,
+            this.y1,
+            this.x2,
+            this.y2
+        )
+    }
+
 }
 
 enum MatrixType {
@@ -359,6 +379,15 @@ export class Paint {
         this.render(contextGid)
     }
 
+    clone(): Paint {
+        let newVersion = new Paint(this.gid, this.fill.clone(), new SVG.Matrix(), this._font, this.gid!)
+        newVersion.matrices = new Map();
+        for (let [k, v] of Array.from(this.matrices.entries())) {
+            newVersion.matrices.set(k, v.clone())
+        }
+        return newVersion
+    }
+
     storeMatrix(matrix: Matrix) {
         this.matrices.set(JSON.stringify(this._font.normalizedLocation), matrix)
     }
@@ -390,6 +419,8 @@ export class Paint {
     }
 
     render(selectedGid: number, header: SVG.Svg | null = null) {
+        console.log("Re-rendering")
+        console.log(this)
         this.rendering = new SVG.G();
         if (this.gid == null) {
             return;
@@ -458,6 +489,7 @@ export class Paint {
         if (this.rendering.find("#wireframe").length) {
             return
         }
+        console.log(this.matrix)
         // @ts-ignore
         let fullbbox = this.rendering.bbox()
         for (var child of this.rendering.children()) {
