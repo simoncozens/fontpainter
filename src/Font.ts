@@ -101,6 +101,14 @@ export class PainterFont {
     return normalizeLocation(this.variations as UnnormalizedLocation, Object.values(this.axes));
   }
 
+  get defaultLocation(): NormalizedLocation {
+    var loc = {} as NormalizedLocation
+    for (var axis in this.axes) {
+      loc[axis] = 0
+    }
+    return loc
+  }
+
   getName(): string {
     return this.fkFont.familyName
   }
