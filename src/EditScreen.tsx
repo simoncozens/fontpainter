@@ -43,6 +43,10 @@ export default function EditScreen(props: EditScreenProps) {
             })
         })
         deleteAllChildren(svg.current);
+        // Add a grid
+        svgEl.defs().svg('<pattern id="smallGrid" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M 5 0 L 0 0 0 5" fill="none" stroke="gray" stroke-width="0.5"/></pattern>')
+        svgEl.defs().svg('<pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse"><rect width="50" height="50" fill="url(#smallGrid)"/><path d="M 50 0 L 0 0 0 50" fill="none" stroke="gray" stroke-width="1"/></pattern>')
+        svgEl.rect(1000, 1000).fill('url(#grid)').back()
         svgEl.width(1000);
         svgEl.height(1000);
         svgEl.addTo(svg.current);
