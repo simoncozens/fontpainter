@@ -11,11 +11,11 @@ import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LockIcon from '@mui/icons-material/Lock';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
-import { Paint, SolidFill, SolidBlackFill, matrixLabel } from './Paints';
+import { Accordion, AccordionDetails, AccordionSummary, SelectChangeEvent } from '@mui/material';
+import { Paint, SolidFill, SolidBlackFill, matrixLabel, BlendMode, SELF_GID } from './Paints';
 import { PainterFont, GlyphInfo } from './Font';
 import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
-import { Autocomplete, ButtonBase, IconButton, Paper, Popover, TextField } from '@mui/material';
+import { Autocomplete, ButtonBase, IconButton, Paper, Popover, TextField, Select, FormControl, MenuItem } from '@mui/material';
 import { Matrix } from '@svgdotjs/svg.js';
 import { createFilterOptions } from '@mui/material/Autocomplete';
 
@@ -103,7 +103,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
     const handleChange = (newValue: Color) => {
         console.log("Setting colour of paint", props.paint, " to ", newValue);
         (props.paint.fill as SolidFill).color = "#" + newValue.hex;
-        // setPaintColor(newValue);
+        setPaintColor(newValue);
         redrawPaints();
     }
 
@@ -158,7 +158,10 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                     </Box>
                     { renaming && props.font ?
                         <Autocomplete
-                            options={props.font!.glyphInfos()}
+                            options={[
+                                { id: SELF_GID, name: "<Self>", unicode: null },
+                                ...props.font!.glyphInfos()
+                            ]}
                             getOptionLabel={(option) => option.name}
                             sx={{ fontWeight: 'inherit', flexGrow: 1 }}
                             value={props.paint.gid ? props.font!.glyphInfos()[props.paint.gid] : null}
@@ -190,6 +193,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
             style={styleProps}
             {...other}
         >
+            {null && 
             <StyledTreeItemRoot nodeId={nodeId.toString() + ".fill"}
                 label={
                     <Box
@@ -206,6 +210,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                         </Box>
                     </Box>
                 } />
+            }
 
         </StyledTreeItemRoot>
     );
@@ -221,16 +226,28 @@ interface LayerTreeProps {
 }
 
 export default function LayerTree(props: LayerTreeProps) {
+    const [blendMode, setBlendMode] = React.useState<BlendMode>(BlendMode.Normal);
+
     function nodeSelect(event: React.SyntheticEvent, nodeIds: Array<string> | string) {
         let selectedIndex = parseInt(nodeIds as string, 10);
         for (let i = 0; i < props.paintLayers.length; i++) {
             if (i == selectedIndex) {
                 props.paintLayers[i].onSelected()
+                setBlendMode(props.paintLayers[i].blendMode)
             } else {
                 props.paintLayers[i].onDeselected()
             }
         }
         props.selectLayer(selectedIndex)
+    }
+
+    function changeBlendMode(event: SelectChangeEvent<BlendMode>) {
+        if (props.selectedLayer !== null) {
+            props.paintLayers[props.selectedLayer].blendMode = event.target.value as BlendMode;
+            setBlendMode(event.target.value as BlendMode)
+            props.setPaintLayers(([] as Paint[]).concat(props.paintLayers));
+            props.selectLayer(props.selectedLayer)
+        }
     }
 
     return (
@@ -241,6 +258,43 @@ export default function LayerTree(props: LayerTreeProps) {
                 <Typography variant="h6">Layers</Typography>
             </AccordionSummary>
             <AccordionDetails>
+                <Paper sx={{
+                    display: 'flex',
+                    justifyContent: 'flex-start',
+                    backgroundColor: '#aaaaaa11',
+                    paddingLeft: 2,
+                }}
+                >
+                    <FormControl size="small">
+                        <Select
+                            SelectDisplayProps={{ style: { paddingTop: 8, paddingBottom: 8 } }}
+                            variant="standard"
+                            disableUnderline={true}
+                            disabled={props.selectedLayer === null}
+                            value={blendMode}
+                            label="Blend Mode"
+                            onChange={changeBlendMode}
+                        >
+                            <MenuItem value={BlendMode.Normal}>Normal</MenuItem>
+                            <MenuItem value={BlendMode.Clear}>Clear</MenuItem>
+                            <MenuItem value={BlendMode.Multiply}>Multiply</MenuItem>
+                            <MenuItem value={BlendMode.Screen}>Screen</MenuItem>
+                            <MenuItem value={BlendMode.Overlay}>Overlay</MenuItem>
+                            <MenuItem value={BlendMode.Darken}>Darken</MenuItem>
+                            <MenuItem value={BlendMode.Lighten}>Lighten</MenuItem>
+                            <MenuItem value={BlendMode.ColorDodge}>Color Dodge</MenuItem>
+                            <MenuItem value={BlendMode.ColorBurn}>Color Burn</MenuItem>
+                            <MenuItem value={BlendMode.HardLight}>Hard Light</MenuItem>
+                            <MenuItem value={BlendMode.SoftLight}>Soft Light</MenuItem>
+                            <MenuItem value={BlendMode.Difference}>Difference</MenuItem>
+                            <MenuItem value={BlendMode.Exclusion}>Exclusion</MenuItem>
+                            <MenuItem value={BlendMode.Hue}>Hue</MenuItem>
+                            <MenuItem value={BlendMode.Saturation}>Saturation</MenuItem>
+                            <MenuItem value={BlendMode.Color}>Color</MenuItem>
+                            <MenuItem value={BlendMode.Luminosity}>Luminosity</MenuItem>
+                        </Select>
+                    </FormControl>
+                </Paper>
             <TreeView
                 defaultCollapseIcon={<ArrowDropDownIcon />}
                 defaultExpandIcon={<ArrowRightIcon />}
@@ -258,7 +312,7 @@ export default function LayerTree(props: LayerTreeProps) {
                 }>
                 </StyledTreeItem>)}
             </TreeView>
-            <Box
+                <Paper
                     sx={{
                         display: 'flex',
                         justifyContent: 'flex-end',
@@ -283,7 +337,7 @@ export default function LayerTree(props: LayerTreeProps) {
                     <IconButton disabled={!props.font}  onClick={
                             () => {
                                 props.paintLayers.splice(0, 0, new Paint(
-                                    null,
+                                    SELF_GID,
                                     SolidBlackFill(),
                                     new Matrix(),
                                     props.font!,
@@ -296,7 +350,7 @@ export default function LayerTree(props: LayerTreeProps) {
                         <NoteAddIcon/>
                     </IconButton>
                     </Box>
-                </Box>
+                </Paper>
             </AccordionDetails>
         </Accordion>
     );

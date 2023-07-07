@@ -9,6 +9,61 @@ import { NormalizedLocation, VariationModel } from "./varmodel";
 
 export let SELF_GID = -1
 
+export enum BlendMode {
+    Normal = -1,
+    Clear = 0,
+    Source,
+    Destination,
+    SourceOver,
+    DestinationOver,
+    SourceIn,
+    DestinationIn,
+    SourceOut,
+    DestinationOut,
+    SourceAtop,
+    DestinationAtop,
+    Xor,
+    Plus,
+    Screen,
+    Overlay,
+    Darken,
+    Lighten,
+    ColorDodge,
+    ColorBurn,
+    HardLight,
+    SoftLight,
+    Difference,
+    Exclusion,
+    Multiply,
+    Hue,
+    Saturation,
+    Color,
+    Luminosity,
+}
+
+function applyBlendMode(mode: BlendMode, el: SVG.Element) {
+    if (mode == BlendMode.Normal) {
+        return
+    }
+    let modestring: string = "normal"
+    if (mode == BlendMode.Multiply) { modestring = "multiply" }
+    if (mode == BlendMode.Screen) { modestring = "screen" }
+    if (mode == BlendMode.Overlay) { modestring = "overlay" }
+    if (mode == BlendMode.Darken) { modestring = "darken" }
+    if (mode == BlendMode.Lighten) { modestring = "lighten" }
+    if (mode == BlendMode.ColorDodge) { modestring = "color-dodge" }
+    if (mode == BlendMode.ColorBurn) { modestring = "color-burn" }
+    if (mode == BlendMode.HardLight) { modestring = "hard-light" }
+    if (mode == BlendMode.SoftLight) { modestring = "soft-light" }
+    if (mode == BlendMode.Difference) { modestring = "difference" }
+    if (mode == BlendMode.Exclusion) { modestring = "exclusion" }
+    if (mode == BlendMode.Hue) { modestring = "hue" }
+    if (mode == BlendMode.Saturation) { modestring = "saturation" }
+    if (mode == BlendMode.Color) { modestring = "color" }
+    if (mode == BlendMode.Luminosity) { modestring = "luminosity" }
+    // @ts-ignore
+    el.css({ "mix-blend-mode": modestring })
+}
 
 function deleteAllChildren(e: any) {
     let child = e.lastElementChild;
@@ -274,7 +329,7 @@ function mergeMatrixTypes(types: MatrixType[]): MatrixType {
 
 
 export function matrixLabel(matrix: Matrix): string {
-    let max2dp = (num: number) => num.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+    let max2dp = (num: number) => (num || 0).toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 0 });
     let style = matrixType(matrix);
     if (style == MatrixType.None) {
         return "";
@@ -292,13 +347,14 @@ export class Paint {
     locked: boolean = false;
     rendering!: SVG.G
     _font: PainterFont
+    blendMode: BlendMode = BlendMode.Normal
 
     constructor(storedGid: number | null, fill: SolidFill | LinearGradientFill, matrix: Matrix, font: PainterFont, contextGid: number) {
         this.gid = storedGid;
         this.fill = fill;
         this.matrices = new Map();
         this._font = font;
-        this.storeMatrix(matrix)
+        this.matrices.set(JSON.stringify(this._font.defaultLocation), matrix)
         this.render(contextGid)
     }
 
@@ -352,6 +408,7 @@ export class Paint {
             this.rendering.attr({ "fill": gradient })
         }
         this.rendering.transform(this.matrix);
+        applyBlendMode(this.blendMode, this.rendering)
     }
 
     toOpenType(palette: Palette, contextGid: number): any {
@@ -392,6 +449,11 @@ export class Paint {
     }
 
     onSelected() {
+        console.log("This layer's matrices are:")
+        console.log(this.matrices)
+        console.log("At ", this._font.defaultLocation)
+        console.log("The value is ")
+        console.log(this.matrix)
         if (this.rendering.find("#wireframe").length) {
             return
         }
@@ -493,6 +555,8 @@ export class Paint {
             let movedX = (e.detail.box.x - startX - 10) * this.matrix.a
             let movedY = (e.detail.box.y - startY - 10) * this.matrix.d
             let el = e.detail.handler.el
+            console.log("Matrix at ", this._font.normalizedLocation, "was ", this.matrix)
+            console.log("Setting this matrix to ", this.matrix.translate(movedX, movedY))
             this.storeMatrix(this.matrix.translate(movedX, movedY))
             el.fire("refreshtree")
         })
