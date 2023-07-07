@@ -348,6 +348,7 @@ export class Paint {
     rendering!: SVG.G
     _font: PainterFont
     blendMode: BlendMode = BlendMode.Normal
+    _keyhandler: ((e: KeyboardEvent) => void) | null = null
 
     constructor(storedGid: number | null, fill: SolidFill | LinearGradientFill, matrix: Matrix, font: PainterFont, contextGid: number) {
         this.gid = storedGid;
@@ -409,6 +410,11 @@ export class Paint {
         }
         this.rendering.transform(this.matrix);
         applyBlendMode(this.blendMode, this.rendering)
+        // Hack
+        if (this.rendering.find("#wireframe").length === 0 && this._keyhandler) {
+            document.removeEventListener("keydown", this._keyhandler);
+            this._keyhandler = null
+        }
     }
 
     toOpenType(palette: Palette, contextGid: number): any {
@@ -449,11 +455,6 @@ export class Paint {
     }
 
     onSelected() {
-        console.log("This layer's matrices are:")
-        console.log(this.matrices)
-        console.log("At ", this._font.defaultLocation)
-        console.log("The value is ")
-        console.log(this.matrix)
         if (this.rendering.find("#wireframe").length) {
             return
         }
@@ -589,15 +590,35 @@ export class Paint {
             console.log("Resize done")
             this.rendering.fire("refreshtree")
         })
+        if (this._keyhandler === null) {
+            this._keyhandler = (e: KeyboardEvent) => {
+                let dx = 0
+                let dy = 0
+                if (e.keyCode == 37) { dx = -1 }
+                if (e.keyCode == 38) { dy = +1 }
+                if (e.keyCode == 39) { dx = +1 }
+                if (e.keyCode == 40) { dy = -1 }
+                if (e.shiftKey) { dx *= 10; dy *= 10 }
+                else if (e.ctrlKey) { dx *= 100; dy *= 100 }
+                this.storeMatrix(this.matrix.translate(dx, dy))
+                if (dx || dy) {
+                    e.preventDefault()
+                    this.rendering.fire("refreshtree")
+                }
+            }
+            document.addEventListener("keydown", this._keyhandler);
+        }
 
         if (this.fill instanceof LinearGradientFill) {
             this.fill.onSelected(this.rendering)
         }
-
-
     }
 
     onDeselected() {
+        if (this._keyhandler) {
+            document.removeEventListener("keydown", this._keyhandler);
+            this._keyhandler = null
+        }
         let wf = this.rendering.find("#wireframe")
         this.rendering.css({ "cursor": "pointer" })
         if (wf.length) {
