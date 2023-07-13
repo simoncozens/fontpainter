@@ -12,7 +12,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import LockIcon from '@mui/icons-material/Lock';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Accordion, AccordionDetails, AccordionSummary, SelectChangeEvent } from '@mui/material';
-import { Paint, SolidFill, SolidBlackFill, matrixLabel, BlendMode, SELF_GID } from './Paints';
+import { Paint, SolidFill, SolidBlackFill, BlendMode, SELF_GID } from './Paints';
+import { matrixLabel } from './VariableMatrix';
 import { PainterFont, GlyphInfo } from './Font';
 import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
 import { Autocomplete, ButtonBase, IconButton, Paper, Popover, TextField, Select, FormControl, MenuItem } from '@mui/material';
@@ -108,11 +109,12 @@ function StyledTreeItem(props: StyledTreeItemProps) {
         redrawPaints();
     }
 
-    let [_, basepalette] = props.paint._font.saveColr();
+    // XXX Too slow
+    // let [_, basepalette] = props.paint._font.saveColr();
     let palette: Record<string, string> = {};
-    for (var colorString of basepalette.colors||[]) {
-        palette[colorString] = colorString;
-    }
+    // for (var colorString of basepalette.colors||[]) {
+    //     palette[colorString] = colorString;
+    // }
 
     let toggleLocked = () => {
         props.paint.locked = !props.paint.locked;
@@ -187,7 +189,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                         </Typography>
                     }
                     <Typography variant="caption" sx={{ fontWeight: 'inherit' }}>
-                        {matrixLabel(props.paint.matrix)}
+                        {matrixLabel(props.paint.current_matrix)}
                     </Typography>
                 </Box>
             }

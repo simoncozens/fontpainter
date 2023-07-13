@@ -6,6 +6,7 @@ import * as SVG from "@svgdotjs/svg.js";
 import '@svgdotjs/svg.draggable.js'
 import './svg.resize.js'
 import { NormalizedLocation, VariationModel } from "./varmodel";
+import { VariableMatrix, MatrixType, matrixType } from "./VariableMatrix";
 
 export let SELF_GID = -1
 
@@ -309,61 +310,10 @@ export class LinearGradientFill {
 
 }
 
-enum MatrixType {
-    None,
-    Translation,
-    ScaleUniform,
-    ScaleNonUniform,
-    Transform
-}
-
-function matrixType(matrix: Matrix): MatrixType {
-    if (matrix.a == 1 && matrix.b == 0 && matrix.c == 0 && matrix.d == 1 && matrix.e == 0 && matrix.f == 0) {
-        return MatrixType.None
-    }
-    if (matrix.a == 1 && matrix.b == 0 && matrix.c == 0 && matrix.d == 1) {
-        return MatrixType.Translation
-    }
-    if (matrix.b == 0 && matrix.c == 0 && matrix.e == 0 && matrix.f == 0) {
-        if (matrix.a == matrix.d) {
-            return MatrixType.ScaleUniform;
-        } else {
-            return MatrixType.ScaleNonUniform;
-        }
-    }
-    return MatrixType.Transform;
-}
-
-function mergeMatrixTypes(types: MatrixType[]): MatrixType {
-    let outtype = MatrixType.None;
-    for (let type of types) {
-        if (outtype == MatrixType.None) {
-            outtype = type
-        }
-        if (type != outtype) {
-            return MatrixType.Transform;
-        }
-    }
-    return outtype
-}
-
-
-export function matrixLabel(matrix: Matrix): string {
-    let max2dp = (num: number) => (num || 0).toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 0 });
-    let style = matrixType(matrix);
-    if (style == MatrixType.None) {
-        return "";
-    } else if (style == MatrixType.Translation) {
-        return ` ${Math.round(matrix.e)}, ${Math.round(matrix.f)}`;
-    } else {
-        return ` (${max2dp(matrix.a)},${max2dp(matrix.b)},${max2dp(matrix.c)},${max2dp(matrix.d)},${Math.round(matrix.e)},${Math.round(matrix.f)})`;
-    }
-}
-
 export class Paint {
     gid: number | null;
     fill: SolidFill | LinearGradientFill;
-    matrices: Map<string, Matrix>;
+    matrix: VariableMatrix;
     locked: boolean = false;
     rendering!: SVG.G
     _font: PainterFont
@@ -373,25 +323,17 @@ export class Paint {
     constructor(storedGid: number | null, fill: SolidFill | LinearGradientFill, matrix: Matrix, font: PainterFont, contextGid: number) {
         this.gid = storedGid;
         this.fill = fill;
-        this.matrices = new Map();
         this._font = font;
-        this.matrices.set(JSON.stringify(this._font.defaultLocation), matrix)
+        this.matrix = new VariableMatrix(Object.keys(this._font.axes));
+        this.matrix.addValue(this._font.defaultLocation, matrix)
         this.render(contextGid)
     }
 
     clone(): Paint {
         let newVersion = new Paint(this.gid, this.fill.clone(), new SVG.Matrix(), this._font, this.gid!)
-        newVersion.matrices = new Map();
-        for (let [k, v] of Array.from(this.matrices.entries())) {
-            newVersion.matrices.set(k, v.clone())
-        }
+        newVersion.matrix = this.matrix.clone()
         return newVersion
     }
-
-    storeMatrix(matrix: Matrix) {
-        this.matrices.set(JSON.stringify(this._font.normalizedLocation), matrix)
-    }
-
 
     public get label(): string {
         if (this.gid == SELF_GID) {
@@ -403,19 +345,8 @@ export class Paint {
         return this._font.glyphInfos()[this.gid].name;
     }
 
-    get matrix(): Matrix {
-        if (this.matrices.size == 1) {
-            return this.matrices.values().next().value;
-        }
-        let masterLocations: NormalizedLocation[] = Array.from(this.matrices.keys()).map((x) => JSON.parse(x))
-        let varmodel = new VariationModel(masterLocations, Object.keys(this._font.axes));
-        let scalars = varmodel.getScalars(this._font.normalizedLocation);
-        let outmatrix = new Matrix();
-        for (var element of ["a", "b", "c", "d", "e", "f"]) {
-            let components: number[] = Array.from(this.matrices.values(), (matrix) => matrix[element]);
-            outmatrix[element] = varmodel.interpolateFromMastersAndScalars(components, scalars);
-        }
-        return outmatrix
+    public get current_matrix(): Matrix {
+        return this.matrix.valueAt(this._font.normalizedLocation)
     }
 
     render(selectedGid: number, header: SVG.Svg | null = null) {
@@ -439,7 +370,7 @@ export class Paint {
             let gradient = this.fill.toSVG(header)
             this.rendering.attr({ "fill": gradient })
         }
-        this.rendering.transform(this.matrix);
+        this.rendering.transform(this.current_matrix);
         applyBlendMode(this.blendMode, this.rendering)
         // Hack
         if (this.rendering.find("#wireframe").length === 0 && this._keyhandler) {
@@ -453,7 +384,8 @@ export class Paint {
             return
         }
         // XXX Support variable matrices here
-        let style = matrixType(this.matrix);
+        let current = this.current_matrix
+        let style = matrixType(current);
         let fillpaint = this.fill.toOpenType(palette);
         let glyphpaint = {
             version: 10,
@@ -466,20 +398,20 @@ export class Paint {
             return {
                 version: 14,
                 paint: glyphpaint,
-                dx: this.matrix.e,
-                dy: this.matrix.f,
+                dx: current.e,
+                dy: current.f,
             }
         } else {
             return {
                 version: 12,
                 paint: glyphpaint,
                 transform: {
-                    xx: this.matrix.a,
-                    xy: this.matrix.b,
-                    yx: this.matrix.c,
-                    yy: this.matrix.d,
-                    dx: this.matrix.e,
-                    dy: this.matrix.f,
+                    xx: current.a,
+                    xy: current.b,
+                    yx: current.c,
+                    yy: current.d,
+                    dx: current.e,
+                    dy: current.f,
                 }
             }
         }
@@ -516,8 +448,9 @@ export class Paint {
         let dotStyle = {
             "fill": "black",
         }
-        let r1 = 10 * this.matrix.inverse().a
-        let r2 = 10 * this.matrix.inverse().d
+        let inverse = this.current_matrix.inverse()
+        let r1 = 10 * inverse.a
+        let r2 = 10 * inverse.d
 
         let bl = wireframe.ellipse(r1, r2).attr({
             "cx": fullbbox.x as number - 5,
@@ -585,12 +518,14 @@ export class Paint {
         })
 
         wireframe.on("dragend", (e: any) => {
-            let movedX = (e.detail.box.x - startX - 10) * this.matrix.a
-            let movedY = (e.detail.box.y - startY - 10) * this.matrix.d
+            let current = this.current_matrix
+            let movedX = (e.detail.box.x - startX - 10) * current.a
+            let movedY = (e.detail.box.y - startY - 10) * current.d
             let el = e.detail.handler.el
-            console.log("Matrix at ", this._font.normalizedLocation, "was ", this.matrix)
-            console.log("Setting this matrix to ", this.matrix.translate(movedX, movedY))
-            this.storeMatrix(this.matrix.translate(movedX, movedY))
+            console.log("Matrix at ", this._font.normalizedLocation, "was ", current)
+            this.matrix.addValue(this._font.normalizedLocation, current.translate(movedX, movedY))
+            console.log("Matrix values now")
+            console.log(this.matrix)
             el.fire("refreshtree")
         })
         wireframe.on("resizestart", (e: any) => {
@@ -604,7 +539,8 @@ export class Paint {
         wireframe.on("resizedone", (e: any) => {
             console.log("The previous matrix placed the box at ", startX, startY)
             // Determine the untransformed start X and Y points of the box
-            let untransformed = new SVG.Point(startX, startY).transform(this.matrix.inverse())
+            let current = this.current_matrix
+            let untransformed = new SVG.Point(startX, startY).transform(current.inverse())
             console.log("The untransformed box was at ", untransformed.x, untransformed.y)
             console.log("The new box is at ", wireframe.bbox().x, wireframe.bbox().y)
             let movedX = (wireframe.bbox().x - startX)
@@ -612,12 +548,12 @@ export class Paint {
             console.log("Having been moved by ", movedX, movedY)
             let widthChange = wireframe.bbox().width / startWidth
             let heightChange = wireframe.bbox().height / startHeight
-            let oldScaleOnly = (new Matrix()).scale(this.matrix.a, this.matrix.d)
+            let oldScaleOnly = (new Matrix()).scale(current.a, current.d)
             let newScaleOnly = oldScaleOnly.scale(widthChange, heightChange)
             let retransformed = untransformed.transform(newScaleOnly)
             console.log(`A scale only matrix would be ${newScaleOnly} and would transform the untransformed box to ${retransformed.x}, ${retransformed.y}`)
-            this.storeMatrix(newScaleOnly.translate(startX - retransformed.x - movedX, startY - retransformed.y - movedY))
-            let testPoint = untransformed.transform(this.matrix)
+            this.matrix.addValue(this._font.normalizedLocation, (newScaleOnly.translate(startX - retransformed.x - movedX, startY - retransformed.y - movedY)))
+            let testPoint = untransformed.transform(current)
             console.log(`Under the new matrix the point gets transformed to ${testPoint.x}, ${testPoint.y}`)
             console.log("Resize done")
             this.rendering.fire("refreshtree")
@@ -632,7 +568,7 @@ export class Paint {
                 if (e.keyCode == 40) { dy = -1 }
                 if (e.shiftKey) { dx *= 10; dy *= 10 }
                 else if (e.ctrlKey) { dx *= 100; dy *= 100 }
-                this.storeMatrix(this.matrix.translate(dx, dy))
+                this.matrix.addValue(this._font.normalizedLocation, this.current_matrix.translate(dx, dy))
                 if (dx || dy) {
                     e.preventDefault()
                     this.rendering.fire("refreshtree")
