@@ -1,1 +1,5 @@
+*ttf
+package-lock.json
 node_modules
+fontwriter/cargo.lock
+fontwriter/target
