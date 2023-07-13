@@ -12,7 +12,7 @@ interface Axis {
 export type UnnormalizedLocation = Record<string, number> & UnnormalizedTag;
 export type NormalizedLocation = Record<string, number> & NormalizedTag;
 type Location = NormalizedLocation | UnnormalizedLocation;
-type Support = Record<string, number[]>;
+export type Support = Record<string, number[]>;
 type SortFunction = (a: NormalizedLocation, b: NormalizedLocation) => number;
 
 function isSuperset<T>(set: Set<T>, subset: Set<T>): boolean {
