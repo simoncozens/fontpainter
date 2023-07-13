@@ -35,7 +35,7 @@ class VariationRegionList {
     }
 }
 
-class VarStore {
+export class VarStore {
     format: number = 1
     variationRegionList: VariationRegionList
     variationDataCount: number = 0
@@ -49,12 +49,14 @@ class VarStore {
 
 let bitLength = (n: number) => Math.floor(Math.log2(Math.abs(n))) + 1
 
+interface DeltaSetEntry { "deltas": number[] }
+
 class VarData {
     itemCount: number = 0
     shortDeltaCount: number = 0
     regionIndexCount = 0
     regionIndexes: number[] = []
-    deltaSets: number[][] = []
+    deltaSets: DeltaSetEntry[] = []
 
     constructor(varRegionIndices: number[], items: number[][], optimize: boolean=true) {
         this.regionIndexes = [...varRegionIndices]
@@ -63,19 +65,22 @@ class VarData {
             console.assert(item.length == varRegionIndices.length)
         }
         this.itemCount = items.length
-        this.deltaSets = [...items]
+        this.deltaSets = items.map((deltas) => ({ "deltas": deltas }))
         this.calculateNumShorts(optimize)
+        // Fix up deltaSets
     }
 
     calculateNumShorts(optimize: boolean = false) {
+        console.log("Var data is ", this)
         let count = this.regionIndexCount
         let items = this.deltaSets
         let bitLengths = new Array(count).fill(0)
         for (let item of items) {
-            let bl = item.map(i => bitLength(i + Number(i < -1)))
+            let bl = item.deltas.map(i => bitLength(i + Number(i < -1)))
             bitLengths = bl.map((b, i) => Math.max(b, bitLengths[i]))
         }
         let byte_lengths = bitLengths.map(b => (b + 8) >> 3)
+        console.log("Byte lengths are ", byte_lengths)
         let longWords = false
         for (var length of byte_lengths) {
             if (length > 2) {
@@ -94,13 +99,13 @@ class VarData {
 
         if (longWords) {
             this.shortDeltaCount = (
-                Math.max(...byte_lengths.map((_, i) => i).filter(i => byte_lengths[i] > 2)) + 1
+                Math.max(-1, ...byte_lengths.map((_, i) => i).filter(i => byte_lengths[i] > 2)) + 1
             )
             this.shortDeltaCount |= 0x8000
         }
         else {
             this.shortDeltaCount = (
-                Math.max(...byte_lengths.map((_, i) => i).filter(i => byte_lengths[i] > 1)) + 1
+                Math.max(-1, ...byte_lengths.map((_, i) => i).filter(i => byte_lengths[i] > 1)) + 1
             )
         }
         this.regionIndexCount = this.regionIndexes.length
@@ -115,7 +120,7 @@ class VarData {
         } else {
             console.assert(countUs == countThem)
         }
-        this.deltaSets.push([...deltas])
+        this.deltaSets.push({ "deltas": [...deltas] })
         this.itemCount = this.deltaSets.length
     }
 }

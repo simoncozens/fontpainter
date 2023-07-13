@@ -379,44 +379,6 @@ export class Paint {
         }
     }
 
-    toOpenType(palette: Palette, contextGid: number): any {
-        if (this.gid == null) {
-            return
-        }
-        // XXX Support variable matrices here
-        let current = this.current_matrix
-        let style = matrixType(current);
-        let fillpaint = this.fill.toOpenType(palette);
-        let glyphpaint = {
-            version: 10,
-            glyphID: this.gid == SELF_GID ? contextGid : this.gid,
-            paint: fillpaint,
-        }
-        if (style == MatrixType.None) {
-            return glyphpaint
-        } else if (style == MatrixType.Translation) {
-            return {
-                version: 14,
-                paint: glyphpaint,
-                dx: current.e,
-                dy: current.f,
-            }
-        } else {
-            return {
-                version: 12,
-                paint: glyphpaint,
-                transform: {
-                    xx: current.a,
-                    xy: current.b,
-                    yx: current.c,
-                    yy: current.d,
-                    dx: current.e,
-                    dy: current.f,
-                }
-            }
-        }
-    }
-
     onSelected() {
         if (this.rendering.find("#wireframe").length) {
             return

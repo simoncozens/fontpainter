@@ -1,5 +1,6 @@
 import { Matrix } from "@svgdotjs/svg.js";
 import { NormalizedLocation, VariationModel } from "./varmodel";
+import { VarStoreBuilder } from "./varstorebuilder";
 
 export enum MatrixType {
     None,
@@ -8,6 +9,8 @@ export enum MatrixType {
     ScaleNonUniform,
     Transform
 }
+
+type OTConvertor = (n: number) => number;
 
 export function matrixType(matrix: Matrix): MatrixType {
     if (matrix.a == 1 && matrix.b == 0 && matrix.c == 0 && matrix.d == 1 && matrix.e == 0 && matrix.f == 0) {
@@ -25,20 +28,6 @@ export function matrixType(matrix: Matrix): MatrixType {
     }
     return MatrixType.Transform;
 }
-
-function mergeMatrixTypes(types: MatrixType[]): MatrixType {
-    let outtype = MatrixType.None;
-    for (let type of types) {
-        if (outtype == MatrixType.None) {
-            outtype = type
-        }
-        if (type != outtype) {
-            return MatrixType.Transform;
-        }
-    }
-    return outtype
-}
-
 
 export function matrixLabel(matrix: Matrix): string {
     let max2dp = (num: number) => (num || 0).toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 0 });
@@ -91,6 +80,10 @@ export class VariableMatrix {
         return out
     }
 
+    get doesVary(): boolean {
+        return this.values.size > 1
+    }
+
     valueAt(loc: NormalizedLocation): Matrix {
         let key = Object.keys(loc).sort().map(k => `${k}:${loc[k]}`).join(",")
         // console.log((new Error()).stack)
@@ -101,6 +94,11 @@ export class VariableMatrix {
         if (this.values.size == 1) {
             // console.log("One value, returning it: ", this.values.values().next().value)
             return this.values.values().next().value
+        }
+
+        if (this.values.has(key)) {
+            // console.log("Found exact match: ", this.values.get(key))
+            return this.values.get(key)!
         }
         
         let value = this.interpolation_cache.get(key)
@@ -119,4 +117,35 @@ export class VariableMatrix {
             return outmatrix
         }
     }
+
+    mostComplexType(): MatrixType {
+        let outtype = MatrixType.None;
+        for (let matrix of Array.from(this.values.values())) {
+            let type = matrixType(matrix)
+            if (outtype == MatrixType.None) {
+                outtype = type
+            }
+            if (type != outtype) {
+                return MatrixType.Transform;
+            }
+        }
+        return outtype
+    }
+
+    addToVarStore(builder: VarStoreBuilder, element: string, convertor: OTConvertor | null = null): number {
+        let locations = [];
+        let masters = [];
+        if (!convertor) {
+            convertor = (x) => x;
+        }
+        for (var [loc_key, matrix] of Array.from(this.values.entries())) {
+            let loc = parseKey(loc_key)
+            locations.push(loc)
+            masters.push(convertor(matrix[element]))
+        }
+        builder.setModel(this.model!);
+        let [_, varIndex] = builder.storeMasters(masters)
+        return varIndex;
+    }
+        
 }

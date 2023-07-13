@@ -145,7 +145,7 @@ export let DeltaSetIndexMap = new r.VersionedStruct(r.uint8, {
 DeltaSetIndexMap.preEncode = function (val, stream) {
   // Compute correct version and entry format
   let ored = 0;
-  for (var idx of val.mapData) {
+  for (var idx of this.mapData) {
       ored |= idx.entry
   }
   let inner = ored & 0xFFFF
@@ -169,12 +169,12 @@ DeltaSetIndexMap.preEncode = function (val, stream) {
       entrySize = 4
   }
 
-  val.entryFormat = ((entrySize - 1) << 4) | (innerBits - 1)
-  val.mapCount = val.mapData.length
-  if (val.mapCount > 0xFFFF) {
-    val.version = 1
+  this.entryFormat = ((entrySize - 1) << 4) | (innerBits - 1)
+  this.mapCount = this.mapData.length
+  if (this.mapCount > 0xFFFF) {
+    this.version = 1
   } else {
-    val.version = 0
+    this.version = 0
   }
 }
 

@@ -9,6 +9,7 @@ import { COLR } from "./fontkit-bits/tables/COLR";
 import CPAL from "./fontkit-bits/tables/CPAL";
 
 import { NormalizedLocation, normalizeLocation, normalizeValue, UnnormalizedLocation } from "./varmodel";
+import { Compiler } from "./compiler";
 export interface Axis {
   tag: string;
   min: number;
@@ -196,59 +197,9 @@ export class PainterFont {
       this.getPaintLayers(id);
       id += 1;
     }
-
-    var palette = new Palette();
-    var baseGlyphPaintRecords: any[] = []
-    var layers: any[] = []
-    this.paints.forEach((paints: Paint[], gid: number) => {
-      let topPaint;
-      if (paints.length == 1) {
-        topPaint = paints[0].toOpenType(palette, gid);
-        if (!topPaint) {
-          return;
-        }
-      } else {
-        topPaint = {
-          version: 1,
-          numLayers: paints.length,
-          firstLayerIndex: layers.length
-        }
-        // Do them reversed (bottom to top)
-        for (var i = paints.length - 1; i >= 0; i--) {
-          let thisPaint = paints[i].toOpenType(palette, gid);
-          if (thisPaint === null) {
-            // Raise some error here
-          } else {
-            layers.push(thisPaint)
-          }
-        }
-      }
-      baseGlyphPaintRecords.push({
-        gid,
-        paint: topPaint
-      })
-    });
-    let layerList = {
-      numLayers: layers.length,
-      paint: layers
-    };
-    let baseGlyphList = {
-      numBaseGlyphPaintRecords: baseGlyphPaintRecords.length,
-      baseGlyphPaintRecords
-    }
-    let colr = {
-      version: 1,
-      numBaseGlyphRecords: 0,
-      baseGlyphRecord: [],
-      layerRecords: [],
-      numLayerRecords: 0,
-      baseGlyphList,
-      layerList,
-      clipList: null,
-      varIndexMap: null,
-      itemVariationStore: null
-    }
-    return [colr, palette]
+    let compiler = new Compiler(this);
+    compiler.compile()
+    return [compiler.colr, compiler.palette]
   }
 
   download() {
