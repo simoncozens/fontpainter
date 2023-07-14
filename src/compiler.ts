@@ -5,7 +5,7 @@ import { VarStore, VarStoreBuilder } from "./varstorebuilder";
 import { MatrixType, VariableMatrix, matrixType } from "./VariableMatrix";
 
 interface DeltaSetIndexMapEntry {
-    entry: number
+    entry: number;
 }
 type DeltaSetIndexMap = DeltaSetIndexMapEntry[];
 
@@ -41,20 +41,20 @@ enum PaintFormat {
     PaintVarSkew = 29,
     PaintSkewAroundCenter = 30,
     PaintVarSkewAroundCenter = 31,
-    PaintComposite = 32
+    PaintComposite = 32,
 }
 
 interface COLRTable {
-    version: number,
-    numBaseGlyphRecords: number,
-    baseGlyphRecord: any[],
-    layerRecords: any[],
-    numLayerRecords: number,
-    baseGlyphList: any,
-    layerList: any,
-    clipList: any,
-    varIndexMap: any,
-    itemVariationStore: VarStore | null
+    version: number;
+    numBaseGlyphRecords: number;
+    baseGlyphRecord: any[];
+    layerRecords: any[];
+    numLayerRecords: number;
+    baseGlyphList: any;
+    layerList: any;
+    clipList: any;
+    varIndexMap: any;
+    itemVariationStore: VarStore | null;
 }
 
 export class Compiler {
@@ -67,28 +67,28 @@ export class Compiler {
     constructor(font: PainterFont) {
         this.font = font;
         this.builder = new VarStoreBuilder(Object.keys(font.axes));
-        this.deltaset = []
+        this.deltaset = [];
     }
 
     compile() {
         this.palette = new Palette();
-        var baseGlyphPaintRecords: any[] = []
-        var layers: any[] = []
+        var baseGlyphPaintRecords: any[] = [];
+        var layers: any[] = [];
         this.font.paints.forEach((paints: Paint[], gid: number) => {
             let topPaint = this.compilePaints(paints, gid, layers);
             baseGlyphPaintRecords.push({
                 gid,
-                paint: topPaint
-            })
+                paint: topPaint,
+            });
         });
         let layerList = {
             numLayers: layers.length,
-            paint: layers
+            paint: layers,
         };
         let baseGlyphList = {
             numBaseGlyphPaintRecords: baseGlyphPaintRecords.length,
-            baseGlyphPaintRecords
-        }
+            baseGlyphPaintRecords,
+        };
         this.colr = {
             version: 1,
             numBaseGlyphRecords: 0,
@@ -99,36 +99,37 @@ export class Compiler {
             layerList,
             clipList: null,
             varIndexMap: null,
-            itemVariationStore: null
-        }
+            itemVariationStore: null,
+        };
         // Add variations
         if (this.deltaset.length > 0) {
-            this.colr.varIndexMap = { mapData: this.deltaset }
-            this.colr.itemVariationStore = this.builder.finish()
+            this.colr.varIndexMap = { mapData: this.deltaset };
+            this.colr.itemVariationStore = this.builder.finish();
         }
         // console.log(this.colr);
     }
 
     compilePaints(paints: Paint[], gid: number, layers: any[]): any | null {
-        if (gid != 1) {
-            return null;
-        }
         if (paints.length == 1) {
             // console.log("Single layer : ", paints[0])
-            return this.compileSinglePaint(paints[0], this.palette!, gid)
+            return this.compileSinglePaint(paints[0], this.palette!, gid);
         }
         let topPaint: any = {
             version: 1,
             numLayers: paints.length,
-            firstLayerIndex: layers.length
-        }
+            firstLayerIndex: layers.length,
+        };
         // Do them reversed (bottom to top)
         let newlayers: any[] = [];
         // console.log("Paints")
         // console.log(paints);
         let bottom = layers.length;
         for (var i = paints.length - 1; i >= 0; i--) {
-            let thisPaint = this.compileSinglePaint(paints[i], this.palette!, gid);
+            let thisPaint = this.compileSinglePaint(
+                paints[i],
+                this.palette!,
+                gid
+            );
             if (thisPaint === null) {
                 // Raise some error here
             } else {
@@ -138,7 +139,7 @@ export class Compiler {
                     let lowerLayers = {
                         version: PaintFormat.PaintColrLayers,
                         firstLayerIndex: bottom,
-                        numLayers: newlayers.length - bottom
+                        numLayers: newlayers.length - bottom,
                     };
                     // console.log("Composite! Lower layer paint, ", lowerLayers)
                     bottom += newlayers.length;
@@ -147,53 +148,59 @@ export class Compiler {
                         version: PaintFormat.PaintComposite,
                         compositeMode: paints[i].blendMode,
                         sourcePaint: thisPaint,
-                        backdropPaint: lowerLayers
-                    }
+                        backdropPaint: lowerLayers,
+                    };
                     // console.log("Composite layer, ", thisPaint)
                     topPaint.firstLayerIndex = bottom;
                 }
-                newlayers.push(thisPaint)
+                newlayers.push(thisPaint);
             }
         }
-        layers.push(...newlayers)
+        layers.push(...newlayers);
         topPaint.numLayers = layers.length - bottom;
         if (topPaint.numLayers == 1) {
-            return layers[topPaint.firstLayerIndex]
+            return layers[topPaint.firstLayerIndex];
         }
-        return topPaint
+        return topPaint;
     }
 
-    compileSinglePaint(paint: Paint, palette: Palette, contextGid: number): any {
+    compileSinglePaint(
+        paint: Paint,
+        palette: Palette,
+        contextGid: number
+    ): any {
         if (paint.gid == null) {
-            console.log("Paint has no gid", paint)
-            return
+            console.log("Paint has no gid", paint);
+            return;
         }
         let fillpaint = paint.fill.toOpenType(palette);
         let glyphpaint = {
             version: 10,
             glyphID: paint.gid == SELF_GID ? contextGid : paint.gid,
             paint: fillpaint,
-        }
-
+        };
 
         let matrix = paint.matrix;
         if (!matrix.doesVary) {
-            return this.compileStaticMatrix(matrix.values.values().next().value, glyphpaint)
+            return this.compileStaticMatrix(
+                matrix.values.values().next().value,
+                glyphpaint
+            );
         }
-        return this.compileVariableMatrix(matrix, glyphpaint)
+        return this.compileVariableMatrix(matrix, glyphpaint);
     }
 
     compileStaticMatrix(matrix: Matrix, glyphpaint: any) {
         let style = matrixType(matrix);
         if (style == MatrixType.None) {
-            return glyphpaint
+            return glyphpaint;
         } else if (style == MatrixType.Translation) {
             return {
                 version: PaintFormat.PaintTranslate,
                 paint: glyphpaint,
                 dx: matrix.e,
                 dy: matrix.f,
-            }
+            };
         } else {
             return {
                 version: PaintFormat.PaintTransform,
@@ -205,32 +212,36 @@ export class Compiler {
                     yy: matrix.d,
                     dx: matrix.e,
                     dy: matrix.f,
-                }
-            }
+                },
+            };
         }
     }
 
     compileVariableMatrix(matrix: VariableMatrix, glyphpaint: any) {
         let highestType = matrix.mostComplexType();
         if (highestType == MatrixType.None) {
-            return glyphpaint
+            return glyphpaint;
         }
         let varIndexBase = this.deltaset.length;
         let def = matrix.valueAt(this.font.defaultLocation);
         if (highestType == MatrixType.Translation) {
             for (var element of ["e", "f"]) {
-                this.deltaset.push({ entry: matrix.addToVarStore(this.builder, element) });
+                this.deltaset.push({
+                    entry: matrix.addToVarStore(this.builder, element),
+                });
             }
             return {
                 version: PaintFormat.PaintVarTranslate,
                 paint: glyphpaint,
                 dx: def.e,
                 dy: def.f,
-                varIndexBase
-            }
+                varIndexBase,
+            };
         } else {
             for (var element of ["a", "b", "c", "d", "e", "f"]) {
-                this.deltaset.push({ entry: matrix.addToVarStore(this.builder, element) });
+                this.deltaset.push({
+                    entry: matrix.addToVarStore(this.builder, element),
+                });
             }
             return {
                 version: PaintFormat.PaintVarTransform,
@@ -242,9 +253,9 @@ export class Compiler {
                     yy: def.d,
                     dx: def.e,
                     dy: def.f,
-                    varIndexBase
-                }
-            }
+                    varIndexBase,
+                },
+            };
         }
     }
 }
