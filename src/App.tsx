@@ -65,6 +65,13 @@ export default function App() {
       selectGid(gid);
     }
   }
+  let wrappedSetPaintLayers = (layers: Paint[]) => {
+    setPaintLayers(layers);
+    if (font && selectedGid) {
+      font.paints.set(selectedGid, layers);
+    }
+  }
+
 
   return (
     <ThemeProvider theme={theme}>
@@ -79,7 +86,7 @@ export default function App() {
           <Grid item xs={4}>
               <Axes font={font} refresh={() => setPaintLayers([...paintLayers])} />
               <GlyphGrid font={font} selectGid={doSelectGid} />
-              <LayerTree font={font} clipboard={clipboard} setClipboard={setClipboard} selectedGid={selectedGid} selectLayer={selectLayer} selectedLayer={selectedLayer} paintLayers={paintLayers} setPaintLayers={setPaintLayers} />
+              <LayerTree font={font} clipboard={clipboard} setClipboard={setClipboard} selectedGid={selectedGid} selectLayer={selectLayer} selectedLayer={selectedLayer} paintLayers={paintLayers} setPaintLayers={wrappedSetPaintLayers} />
           </Grid>
           <Grid item xs={8}>
               <EditScreen font={font} selectedGid={selectedGid} selectLayer={selectLayer} selectedLayer={selectedLayer} paintLayers={paintLayers} setPaintLayers={setPaintLayers} />

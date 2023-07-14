@@ -1,6 +1,6 @@
 import { Matrix } from "@svgdotjs/svg.js";
 import { PainterFont } from "./Font";
-import { Paint, Palette, SELF_GID } from "./Paints";
+import { BlendMode, Paint, Palette, SELF_GID } from "./Paints";
 import { VarStore, VarStoreBuilder } from "./varstorebuilder";
 import { MatrixType, VariableMatrix, matrixType } from "./VariableMatrix";
 
@@ -76,10 +76,12 @@ export class Compiler {
         var layers: any[] = []
         this.font.paints.forEach((paints: Paint[], gid: number) => {
             let topPaint = this.compilePaints(paints, gid, layers);
-            baseGlyphPaintRecords.push({
-                gid,
-                paint: topPaint
-            })
+            if (gid < 4) { // XXX
+                baseGlyphPaintRecords.push({
+                    gid,
+                    paint: topPaint
+                })
+            }
         });
         let layerList = {
             numLayers: layers.length,
@@ -110,22 +112,55 @@ export class Compiler {
     }
 
     compilePaints(paints: Paint[], gid: number, layers: any[]) : any | null {
+        if (gid != 1) {
+            return null;
+        }
         if (paints.length == 1) {
+            console.log("Single layer : ", paints[0])
             return this.compileSinglePaint(paints[0], this.palette!, gid)
         }
-        let topPaint = {
+        let topPaint: any = {
             version: 1,
             numLayers: paints.length,
             firstLayerIndex: layers.length
         }
         // Do them reversed (bottom to top)
+        let newlayers: any[] = [];
+        console.log("Paints")
+        console.log(paints);
+        let bottom = layers.length;
         for (var i = paints.length - 1; i >= 0; i--) {
             let thisPaint = this.compileSinglePaint(paints[i], this.palette!, gid);
             if (thisPaint === null) {
                 // Raise some error here
             } else {
-                layers.push(thisPaint)
+                console.log("Compiling layer ",i, " : ", paints[i])
+                if (paints[i].blendMode != BlendMode.Normal) {
+                    // Group lower layers
+                    let lowerLayers = {
+                            version: PaintFormat.PaintColrLayers,
+                            firstLayerIndex: bottom,
+                            numLayers: newlayers.length - bottom
+                    };
+                    console.log("Composite! Lower layer paint, ", lowerLayers)
+                    bottom += newlayers.length;
+                    // Add a composite layer
+                    thisPaint = {
+                        version: PaintFormat.PaintComposite,
+                        compositeMode: paints[i].blendMode,
+                        sourcePaint: thisPaint,
+                        backdropPaint: lowerLayers
+                    }
+                    console.log("Composite layer, ", thisPaint)
+                    topPaint.firstLayerIndex = bottom;
+                }
+                newlayers.push(thisPaint)
             }
+        }
+        layers.push(...newlayers)
+        topPaint.numLayers = layers.length - bottom;
+        if (topPaint.numLayers == 1) {
+            return layers[topPaint.firstLayerIndex]
         }
         return topPaint
     }

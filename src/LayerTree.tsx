@@ -225,7 +225,7 @@ interface LayerTreeProps {
     selectedLayer: number | null,
     selectedGid: number | null,
     paintLayers: Paint[],
-    setPaintLayers: React.Dispatch<React.SetStateAction<Paint[]>>,
+    setPaintLayers: (p: Paint[]) => void,
     clipboard: Paint[] | null,
     setClipboard: React.Dispatch<React.SetStateAction<Paint[] | null>>,
 }
