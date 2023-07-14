@@ -76,12 +76,10 @@ export class Compiler {
         var layers: any[] = []
         this.font.paints.forEach((paints: Paint[], gid: number) => {
             let topPaint = this.compilePaints(paints, gid, layers);
-            if (gid < 4) { // XXX
-                baseGlyphPaintRecords.push({
-                    gid,
-                    paint: topPaint
-                })
-            }
+            baseGlyphPaintRecords.push({
+                gid,
+                paint: topPaint
+            })
         });
         let layerList = {
             numLayers: layers.length,
@@ -108,15 +106,15 @@ export class Compiler {
             this.colr.varIndexMap = { mapData: this.deltaset }
             this.colr.itemVariationStore = this.builder.finish()
         }
-        console.log(this.colr);
+        // console.log(this.colr);
     }
 
-    compilePaints(paints: Paint[], gid: number, layers: any[]) : any | null {
+    compilePaints(paints: Paint[], gid: number, layers: any[]): any | null {
         if (gid != 1) {
             return null;
         }
         if (paints.length == 1) {
-            console.log("Single layer : ", paints[0])
+            // console.log("Single layer : ", paints[0])
             return this.compileSinglePaint(paints[0], this.palette!, gid)
         }
         let topPaint: any = {
@@ -126,23 +124,23 @@ export class Compiler {
         }
         // Do them reversed (bottom to top)
         let newlayers: any[] = [];
-        console.log("Paints")
-        console.log(paints);
+        // console.log("Paints")
+        // console.log(paints);
         let bottom = layers.length;
         for (var i = paints.length - 1; i >= 0; i--) {
             let thisPaint = this.compileSinglePaint(paints[i], this.palette!, gid);
             if (thisPaint === null) {
                 // Raise some error here
             } else {
-                console.log("Compiling layer ",i, " : ", paints[i])
+                // console.log("Compiling layer ", i, " : ", paints[i])
                 if (paints[i].blendMode != BlendMode.Normal) {
                     // Group lower layers
                     let lowerLayers = {
-                            version: PaintFormat.PaintColrLayers,
-                            firstLayerIndex: bottom,
-                            numLayers: newlayers.length - bottom
+                        version: PaintFormat.PaintColrLayers,
+                        firstLayerIndex: bottom,
+                        numLayers: newlayers.length - bottom
                     };
-                    console.log("Composite! Lower layer paint, ", lowerLayers)
+                    // console.log("Composite! Lower layer paint, ", lowerLayers)
                     bottom += newlayers.length;
                     // Add a composite layer
                     thisPaint = {
@@ -151,7 +149,7 @@ export class Compiler {
                         sourcePaint: thisPaint,
                         backdropPaint: lowerLayers
                     }
-                    console.log("Composite layer, ", thisPaint)
+                    // console.log("Composite layer, ", thisPaint)
                     topPaint.firstLayerIndex = bottom;
                 }
                 newlayers.push(thisPaint)
@@ -216,7 +214,7 @@ export class Compiler {
         let highestType = matrix.mostComplexType();
         if (highestType == MatrixType.None) {
             return glyphpaint
-        } 
+        }
         let varIndexBase = this.deltaset.length;
         let def = matrix.valueAt(this.font.defaultLocation);
         if (highestType == MatrixType.Translation) {
