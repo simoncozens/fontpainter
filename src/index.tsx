@@ -3,7 +3,7 @@ import * as React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
 import hbjs from "./hbjs";
-import { default as init } from 'fontwriter';
+import __wbg_init from 'fontwriter';
 
 const rootElement = document.getElementById('root');
 // const root = ReactDOM.createRoot(rootElement!);
@@ -18,7 +18,7 @@ fetch(`${process.env.PUBLIC_URL}/harfbuzz.wasm`)
     const hb = hbjs(results.instance); // Dirty but works
     window.harfbuzz = results.instance;
     window.hbjs = hb;
-    init()
+    __wbg_init()
    }).then(() => {
     ReactDOM.render(
         <App />,

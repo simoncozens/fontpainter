@@ -28,9 +28,11 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "latest",
-    "@types/react-highlight": "^0.12.5"
+    "@types/react-highlight": "^0.12.5",
+    "wasm-pack": "^0.12.1"
   },
   "scripts": {
+    "prebuild": "cd fontwriter; wasm-pack build --target web; cd ..",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

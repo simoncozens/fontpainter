@@ -1,7 +1,7 @@
 import * as SVG from "@svgdotjs/svg.js";
 import '@svgdotjs/svg.draggable.js'
 
-import * as fontwriter from "fontwriter";
+import { add_table } from "fontwriter";
 
 import { Font, create } from "fontkit";
 import { Paint, Palette, SolidFill, SELF_GID, LinearGradientFill, GradientStop } from "./Paints";
@@ -207,8 +207,8 @@ export class PainterFont {
     let cpal = palette.toOpenType();
     let colr_blob = COLR.toBuffer(colr)
     let cpal_blob = CPAL.toBuffer(cpal)
-    let output = fontwriter.add_table(this.fontBlob, "COLR", colr_blob)
-    output = fontwriter.add_table(output, "CPAL", cpal_blob)
+    let output = add_table(this.fontBlob, "COLR", colr_blob)
+    output = add_table(output, "CPAL", cpal_blob)
     let datauri = `data:application/octet-stream;base64,${uint8ArrayToBase64(output)}`;
     var element = document.createElement('a');
     element.setAttribute('href', datauri);

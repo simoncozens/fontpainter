@@ -5,5 +5,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Deploy react app to github pages
-      uses: tanwanimohit/deploy-react-to-ghpages@master
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        target: wasm32-unknown-unknown
+    - run: npm ci
+    - run: npm run build
+    - run: git config user.name github-actions
+    - run: git config user.email github-actions@github.com
+    - run: git --work-tree build add --all
+    - run: git commit -m "Automatic Deploy action run by github-actions"
+    - run: git push origin HEAD:gh-pages --force
