@@ -7,6 +7,7 @@ import Grid from '@mui/material/Grid';
 import { PainterFont } from './Font';
 import { Paint } from './Paints';
 import { GlyphGrid } from './GlyphGrid';
+import { Developer } from "./Developer";
 import TopMenu from './TopMenu';
 import LayerTree from './LayerTree';
 import EditScreen from './EditScreen';
@@ -87,9 +88,10 @@ export default function App() {
               <Axes font={font} refresh={() => setPaintLayers([...paintLayers])} />
               <GlyphGrid font={font} selectGid={doSelectGid} />
               <LayerTree font={font} clipboard={clipboard} setClipboard={setClipboard} selectedGid={selectedGid} selectLayer={selectLayer} selectedLayer={selectedLayer} paintLayers={paintLayers} setPaintLayers={wrappedSetPaintLayers} />
+              <Developer font={font} clipboard={clipboard} selectedGid={selectedGid} selectedLayer={selectedLayer} paintLayers={paintLayers} />
           </Grid>
           <Grid item xs={8}>
-              <EditScreen font={font} selectedGid={selectedGid} selectLayer={selectLayer} selectedLayer={selectedLayer} paintLayers={paintLayers} setPaintLayers={setPaintLayers} />
+              <EditScreen font={font} selectedGid={selectedGid} selectedLayer={selectedLayer} selectLayer={selectLayer} paintLayers={paintLayers} setPaintLayers={setPaintLayers} />
           </Grid>
         </Grid>
       </Box>

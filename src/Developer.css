@@ -1,0 +1,9 @@
+pre { 
+    max-height: 100%;
+    height: 100%;
+}
+.hljs {
+  overflow-y: scroll;
+  max-height: inherit;
+  position: relative;
+}

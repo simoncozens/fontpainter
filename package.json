@@ -21,11 +21,13 @@
     "prop-types": "^15.7.2",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
+    "react-highlight": "^0.15.0",
     "react-scripts": "latest",
     "typescript": "latest"
   },
   "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "latest"
+    "@babel/plugin-proposal-private-property-in-object": "latest",
+    "@types/react-highlight": "^0.12.5"
   },
   "scripts": {
     "start": "react-scripts start",
