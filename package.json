@@ -2,6 +2,7 @@
   "name": "fontpainter",
   "version": "1.0.0",
   "private": true,
+  "homepage": "https://simoncozens.github.io/fontpainter/",
   "dependencies": {
     "@emotion/styled": "latest",
     "@mui/icons-material": "latest",
