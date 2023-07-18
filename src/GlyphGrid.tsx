@@ -30,7 +30,7 @@ export function GlyphGrid(props: GlyphGridProps) {
         rows = props.font.glyphInfos() as unknown as GridRowsProp[];
     }
     return (
-        <Accordion sx={{ width: '100%' }}>
+        <Accordion sx={{ width: '100%' }} disabled={!props.font}>
             <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
             >

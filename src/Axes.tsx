@@ -22,25 +22,22 @@ function AxisSlider(props: AxisSliderProps) {
     let range = Math.abs(props.axis.max - props.axis.min);
     let snap = 0.05
     const [value, setValue] = React.useState(props.axis.default);
+    let marks = [
+        { value: props.axis.min },
+        { value: props.axis.default },
+        { value: props.axis.max },
+    ]
     return <Slider
         value={value}
         min={props.axis.min}
         max={props.axis.max}
-        marks={[
-            { value: props.axis.min },
-            { value: props.axis.default },
-            { value: props.axis.max },
-        ]}
+        marks={marks}
         onChange={(event, newValue) => {
             let v = newValue as number;
-            if (Math.abs(v - props.axis.max) < range * snap) {
-                v = props.axis.max
-            }
-            if (Math.abs(v - props.axis.min) < range * snap) {
-                v = props.axis.min
-            }
-            if (Math.abs(v - props.axis.default) < range * snap) {
-                v = props.axis.default
+            for (var mark of marks) {
+                if (Math.abs(v - mark.value) < range * snap) {
+                    v = mark.value
+                }
             }
             setValue(v)
             props.font!.variations[props.axis.tag] = v as number;

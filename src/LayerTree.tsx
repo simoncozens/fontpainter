@@ -256,7 +256,7 @@ export default function LayerTree(props: LayerTreeProps) {
     }
 
     return (
-        <Accordion sx={{ width: '100%' }} defaultExpanded={true}>
+        <Accordion sx={{ width: '100%' }} defaultExpanded={props.font !== null} disabled={!props.font}>
             <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
             >
