@@ -3,6 +3,7 @@ import { PainterFont } from './Font';
 import { Paint } from './Paints';
 import * as SVG from "@svgdotjs/svg.js";
 import useMediaQuery from '@mui/material/useMediaQuery';
+import '@svgdotjs/svg.panzoom.js'
 
 interface EditScreenProps {
     font: PainterFont | null,
@@ -23,6 +24,7 @@ function deleteAllChildren(e: any) {
 
 export default function EditScreen(props: EditScreenProps) {
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+    const [zoomValue, setZoomValue] = React.useState<any>(null)
     const backgroundColor = React.useMemo(
       () => prefersDarkMode ? '#AAA' : 'white',
       [prefersDarkMode],
@@ -48,7 +50,17 @@ export default function EditScreen(props: EditScreenProps) {
         svgEl.defs().svg('<pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse"><rect width="50" height="50" fill="url(#smallGrid)"/><path d="M 50 0 L 0 0 0 50" fill="none" stroke="gray" stroke-width="1"/></pattern>')
         svgEl.rect(1000, 1000).fill('url(#grid)').back()
         svgEl.width(1000);
-        svgEl.height(1000);
+        svgEl.height(1000).viewbox('0 0 1000 1000').panZoom({
+            zoomFactor: 0.5,
+            zoomMin: 0.5,
+            zoomMax: 50
+        });
+        if (zoomValue) {
+            svgEl.zoom(zoomValue.level, zoomValue.focus);
+        }
+        svgEl.on("zoom", (evt: any) => {
+            setZoomValue(evt.detail)
+        })
         svgEl.addTo(svg.current);
     }
     return (

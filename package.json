@@ -11,6 +11,7 @@
     "@mui/x-data-grid": "^6.9.0",
     "@svgdotjs/svg.draggable.js": "^3.0.3",
     "@svgdotjs/svg.js": "^3.0.16",
+    "@svgdotjs/svg.panzoom.js": "^2.1.2",
     "@types/fontkit": "^2.0.3",
     "@types/react": "latest",
     "@types/react-dom": "latest",
