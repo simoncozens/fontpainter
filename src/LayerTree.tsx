@@ -11,7 +11,7 @@ import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LockIcon from '@mui/icons-material/Lock';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Accordion, AccordionDetails, AccordionSummary, SelectChangeEvent } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, InputAdornment, SelectChangeEvent } from '@mui/material';
 import { Paint, SolidFill, SolidBlackFill, BlendMode, SELF_GID } from './Paints';
 import { GlyphInfo } from './Font';
 import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
@@ -111,14 +111,12 @@ function FillItem(props: FillItemProps) {
                 }}
             >
                 <Box sx={{ paddingRight: 2 }}>
-                    <Typography sx={{ fontWeight: 'bold' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 'inherit' }}>
+                        {props.paint.fill instanceof SolidFill ? "Solid " : "Gradient "}
                         Fill
                     </Typography>
                 </Box>
-                <Box sx={{ paddingRight: 2 }}>
-                    {props.paint.fill instanceof SolidFill ? "Solid " : "Gradient"}
-                </Box>
-                <Box sx={{ paddingRight: 2 }}>
+                <Box sx={{ paddingRight: 2, flex: 1 }}>
                     <ButtonBase onClick={handleClick}>
                         <ColorButton color={createColor((props.paint.fill as SolidFill).color)} />
                     </ButtonBase>
@@ -135,8 +133,23 @@ function FillItem(props: FillItemProps) {
                     </Popover>
                 </Box>
                 <Box sx={{ paddingRight: 2 }}>
-                    Opacity:
-                    <TextField type={"number"} />
+                    <Typography variant="caption" sx={{ fontWeight: 'inherit' }}>
+                        Opacity:
+                    </Typography>
+                </Box>
+                <TextField
+                    type="number"
+                    size="small"
+                    variant="standard"
+                    InputProps={{
+                        inputProps: { min: 0, max: 100 }, endAdornment:
+                            <InputAdornment position="end">%</InputAdornment>,
+                    }}
+                />
+                <Box sx={{ paddingRight: 2 }}>
+                    <IconButton onClick={handleClick}>
+                        <MultipleStop />
+                    </IconButton>
                 </Box>
 
             </Box>
@@ -165,8 +178,13 @@ function TransformItem(props: TransformItemProps) {
                     pr: 0,
                 }}
             >
+                <Box sx={{ paddingRight: 2, flex: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 'inherit' }}>
+                        Transformation
+                    </Typography>
+                </Box>
                 <Box sx={{ paddingRight: 2 }}>
-                    <Typography sx={{ fontWeight: 'bold' }}>
+                    <Typography variant="caption" sx={{ fontWeight: 'inherit' }}>
                         {props.paint.matrix.label_value(props.paint.current_matrix)}
                     </Typography>
                 </Box>
@@ -220,7 +238,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                     }}
                 >
                     <Box sx={{ paddingRight: 2 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 'inherit' }}>
+                        <Typography sx={{ fontWeight: 'inherit' }}>
                             {label}
                         </Typography>
                     </Box>
@@ -253,7 +271,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                             }}
                         />
                         :
-                        <Typography variant="body2" sx={{ fontWeight: 'inherit', flexGrow: 1 }} onDoubleClick={
+                        <Typography sx={{ fontWeight: 'inherit', flexGrow: 1 }} onDoubleClick={
                             () => {
                                 setRenaming(true);
                             }

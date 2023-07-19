@@ -29,7 +29,7 @@ export function Variability(props: VariabilityProps) {
         }
     }
     return (
-        <Accordion sx={{ width: '100%' }} disabled={!props.variation}>
+        <Accordion sx={{ width: '100%' }} disabled={!props.variation} defaultExpanded={true}>
             <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
             >
