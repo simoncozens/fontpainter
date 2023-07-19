@@ -1,13 +1,7 @@
-enum NormalizedTag { _ = '' };
-enum UnnormalizedTag { _ = '' };
+import { Axis } from "./Font";
 
-interface Axis {
-	tag: string;
-	name?: string;
-	min: number;
-	max: number;
-	default: number;
-}
+enum NormalizedTag { _ = 0 };
+enum UnnormalizedTag { _ = 0 };
 
 export type UnnormalizedLocation = Record<string, number> & UnnormalizedTag;
 export type NormalizedLocation = Record<string, number> & NormalizedTag;

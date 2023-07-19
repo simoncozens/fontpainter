@@ -410,7 +410,7 @@ export default function LayerTree() {
                             () => {
                                 fc.paintLayers!.splice(0, 0, new Paint(
                                     SELF_GID,
-                                    SolidBlackFill(),
+                                    SolidBlackFill(fc.font!),
                                     new Matrix(),
                                     fc.font!,
                                     fc.selectedGid!

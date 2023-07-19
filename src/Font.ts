@@ -4,7 +4,7 @@ import '@svgdotjs/svg.draggable.js'
 import { add_table } from "fontwriter";
 
 import { Font, create } from "fontkit";
-import { Paint, Palette, SolidFill, SELF_GID, LinearGradientFill, GradientStop } from "./Paints";
+import { Paint, Palette, SolidFill, SELF_GID, LinearGradientFill, GradientStop, SolidBlackFill } from "./Paints";
 import { COLR } from "./fontkit-bits/tables/COLR";
 import CPAL from "./fontkit-bits/tables/CPAL";
 
@@ -12,6 +12,7 @@ import { NormalizedLocation, normalizeLocation, normalizeValue, UnnormalizedLoca
 import { Compiler } from "./compiler";
 export interface Axis {
   tag: string;
+  name?: string;
   min: number;
   max: number;
   default: number;
@@ -170,7 +171,7 @@ export class PainterFont {
       //   this.paints.get(gid)![1].locked = true
 
       // } else {
-        let basicPaint = new Paint(SELF_GID, new SolidFill("#000000", 1.0), new SVG.Matrix(), this, gid);
+      let basicPaint = new Paint(SELF_GID, SolidBlackFill(this), new SVG.Matrix(), this, gid);
         this.paints.set(gid, [basicPaint])
       // }
     }

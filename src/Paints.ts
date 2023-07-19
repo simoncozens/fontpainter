@@ -6,6 +6,7 @@ import * as SVG from "@svgdotjs/svg.js";
 import '@svgdotjs/svg.draggable.js'
 import './svg.resize.js'
 import { VariableMatrix } from "./VariableMatrix";
+import { VariableScalar } from "./VariableScalar";
 
 export let SELF_GID = -1
 
@@ -129,11 +130,14 @@ export class Palette {
 
 export class SolidFill {
     color: string;
-    opacity: number;
+    opacity: VariableScalar;
+    _font: PainterFont;
 
-    constructor(color: string, opacity: number) {
+    constructor(color: string, opacity: number, font: PainterFont) {
         this.color = color;
-        this.opacity = opacity;
+        this._font = font;
+        this.opacity = new VariableScalar(Object.keys(font.axes))
+        this.opacity.addValue(font.defaultLocation, opacity)
     }
 
     toOpenType(palette: Palette): any {
@@ -143,16 +147,22 @@ export class SolidFill {
             alpha: this.opacity
         }
     }
+    get current_opacity(): number {
+        return this.opacity.valueAt(this._font.normalizedLocation)
+    }
     get description(): string {
-        return `SolidFill(${this.color}, ${this.opacity})`
+        return `SolidFill(${this.color}, ${this.current_opacity})`
     }
 
     clone(): SolidFill {
-        return new SolidFill(this.color, this.opacity)
+        let cloned = new SolidFill(this.color, this.current_opacity, this._font);
+        cloned.opacity = this.opacity.clone() as VariableScalar
+        return cloned
+
     }
 }
 
-export let SolidBlackFill = () => new SolidFill("#000000", 1.0);
+export let SolidBlackFill = (font: PainterFont) => new SolidFill("#000000", 1.0, font);
 
 export class GradientStop {
     color: string;
@@ -349,8 +359,8 @@ export class Paint {
     }
 
     render(selectedGid: number, header: SVG.Svg | null = null) {
-        console.log("Re-rendering")
-        console.log(this)
+        // console.log("Re-rendering")
+        // console.log(this)
         this.rendering = new SVG.G();
         if (this.gid == null) {
             return;
