@@ -20,13 +20,19 @@ interface AxisSliderProps {
 function AxisSlider(props: AxisSliderProps) {
     const fc: FontContextType = React.useContext(FontContext);
     let range = Math.abs(props.axis.max - props.axis.min);
-    let snap = 0.05
+    let snap = 0.02
     const [value, setValue] = React.useState(props.axis.default);
     let marks = [
         { value: props.axis.min },
         { value: props.axis.default },
         { value: props.axis.max },
     ]
+    if (fc.selectedVariableThing) {
+        for (var loc of fc.selectedVariableThing.locations(props.axis)) {
+            marks.push({ value: loc })
+        }
+
+    }
     return <Slider
         value={value}
         min={props.axis.min}

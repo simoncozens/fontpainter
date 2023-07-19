@@ -1,5 +1,6 @@
 import { Matrix } from "@svgdotjs/svg.js";
 import { NormalizedLocation, VariationModel } from "./varmodel";
+import { Axis } from "./Font";
 import { VarStoreBuilder } from "./varstorebuilder";
 import { MatrixType, matrixType } from "./VariableMatrix";
 
@@ -26,6 +27,24 @@ export abstract class VariableThing<T> {
         this.interpolation_cache = new Map();
         this._model = null;
         this.axes = axes;
+    }
+
+    locations(axis: Axis): number[] {
+        let out: number[] = [];
+        for (let k of Array.from(this.values.keys())) {
+            let loc = parseKey(k);
+            let val: number = loc[axis.tag];
+            // Denormalize value
+            if (val > 0) {
+                val = val * (axis.max - axis.default) + axis.default;
+            } else {
+                val = val * (axis.default - axis.min) + axis.default;
+            }
+            out.push(val);
+        }
+        console.log("locations: ", out);
+        return out;
+
     }
 
     addValue(loc: NormalizedLocation, value: T) {
