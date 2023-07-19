@@ -6,7 +6,8 @@ import * as SVG from "@svgdotjs/svg.js";
 import '@svgdotjs/svg.draggable.js'
 import './svg.resize.js'
 import { VariableMatrix } from "./VariableMatrix";
-import { VariableScalar } from "./VariableScalar";
+import { VariableScalar, f2dot14 } from "./VariableScalar";
+import { Compiler } from "./compiler";
 
 export let SELF_GID = -1
 
@@ -140,11 +141,25 @@ export class SolidFill {
         this.opacity.addValue(font.defaultLocation, opacity)
     }
 
-    toOpenType(palette: Palette): any {
+    toOpenType(compiler: Compiler): any {
+        const paletteIndex = compiler.palette!.indexOf(this.color);
+        if (this.opacity.doesVary) {
+            let varIndexBase = compiler.deltaset.length;
+            compiler.deltaset.push({
+                entry: this.opacity.addToVarStore(compiler.builder, f2dot14),
+            })
+            return {
+                version: 3,
+                paletteIndex: paletteIndex,
+                alpha: this.opacity.valueAt(this._font.defaultLocation),
+                varIndexBase
+            }
+
+        }
         return {
             version: 2,
-            paletteIndex: palette.indexOf(this.color),
-            alpha: this.opacity
+            paletteIndex,
+            alpha: this.current_opacity
         }
     }
     get current_opacity(): number {

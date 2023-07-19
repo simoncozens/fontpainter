@@ -1,6 +1,6 @@
 import { Matrix } from "@svgdotjs/svg.js";
 import { PainterFont } from "./Font";
-import { BlendMode, Paint, Palette, SELF_GID } from "./Paints";
+import { BlendMode, Paint, Palette, SELF_GID, SolidFill } from "./Paints";
 import { VarStore, VarStoreBuilder } from "./varstorebuilder";
 import { MatrixType, VariableMatrix, matrixType } from "./VariableMatrix";
 
@@ -173,7 +173,7 @@ export class Compiler {
             console.log("Paint has no gid", paint);
             return;
         }
-        let fillpaint = paint.fill.toOpenType(palette);
+        let fillpaint = (paint.fill as SolidFill).toOpenType(this);
         let glyphpaint = {
             version: 10,
             glyphID: paint.gid == SELF_GID ? contextGid : paint.gid,
@@ -227,7 +227,7 @@ export class Compiler {
         if (highestType == MatrixType.Translation) {
             for (var element of ["e", "f"]) {
                 this.deltaset.push({
-                    entry: matrix.addToVarStore(this.builder, element),
+                    entry: matrix.addToVarStore(this.builder, (v) => v[element]),
                 });
             }
             return {
@@ -240,7 +240,7 @@ export class Compiler {
         } else {
             for (var element of ["a", "b", "c", "d", "e", "f"]) {
                 this.deltaset.push({
-                    entry: matrix.addToVarStore(this.builder, element),
+                    entry: matrix.addToVarStore(this.builder, (v) => v[element]),
                 });
             }
             return {

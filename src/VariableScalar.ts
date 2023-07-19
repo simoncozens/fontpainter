@@ -13,6 +13,9 @@ function parseKey(s: string): NormalizedLocation {
     return out;
 }
 
+export function f2dot14(f: number): number {
+    return Math.round(f * 16384);
+}
 
 type OTConvertor<T> = (n: T) => number;
 
@@ -120,7 +123,6 @@ export abstract class VariableThing<T> {
 
     addToVarStore(
         builder: VarStoreBuilder,
-        element: string,
         convertor: OTConvertor<T> | null = null
     ): number {
         let masters: number[] = [];
