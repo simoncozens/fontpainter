@@ -54,8 +54,8 @@ function FontDrop(props: FontDropProps) {
 
 export default function TopMenu() {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-    const [dropDialogOpen, setDropDialogOpen] = React.useState(false);
     const fc: FontContextType = React.useContext(FontContext);
+    const [dropDialogOpen, setDropDialogOpen] = React.useState(!fc.font);
     const open = Boolean(anchorEl);
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
