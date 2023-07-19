@@ -5,14 +5,11 @@ import { DataGrid, GridRowsProp, GridColDef, GridValueFormatterParams } from '@m
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import * as React from 'react';
-
-interface GlyphGridProps {
-    font: PainterFont | null
-    selectGid: React.Dispatch<React.SetStateAction<number | null>>
-}
+import { FontContext, FontContextType } from "./App";
 
 
-export function GlyphGrid(props: GlyphGridProps) {
+export function GlyphGrid() {
+    const fc: FontContextType = React.useContext(FontContext);
     const columns: GridColDef[] = [
         { field: 'id', headerName: 'GID', width: 10 },
         { field: 'name', headerName: 'Name', flex: 1 },
@@ -26,11 +23,11 @@ export function GlyphGrid(props: GlyphGridProps) {
         },
     ];
     var rows: GridRowsProp = [];
-    if (props.font) {
-        rows = props.font.glyphInfos() as unknown as GridRowsProp[];
+    if (fc.font) {
+        rows = fc.font.glyphInfos() as unknown as GridRowsProp[];
     }
     return (
-        <Accordion sx={{ width: '100%' }} disabled={!props.font}>
+        <Accordion sx={{ width: '100%' }} disabled={!fc.font}>
             <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
             >
@@ -43,7 +40,7 @@ export function GlyphGrid(props: GlyphGridProps) {
                 hideFooterSelectedRowCount={true}
                 style={{height: 300 }}
                 onRowClick={(params, event, details) => {
-                    props.selectGid(params.row.id);
+                    fc.selectGid(params.row.id);
                 }}
             />
             </AccordionDetails>

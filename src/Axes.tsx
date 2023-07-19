@@ -5,20 +5,20 @@ import * as React from 'react';
 import { Slider, Table, TableBody, TableCell, TableHead, TableRow, Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { styled } from '@mui/material/styles';
+import { FontContext, FontContextType } from "./App";
 
 
 interface AxesProps {
-    font: PainterFont | null
     refresh: () => void
 }
 
 interface AxisSliderProps {
-    font: PainterFont | null
     axis: Axis
     refresh: () => void
 }
 
 function AxisSlider(props: AxisSliderProps) {
+    const fc: FontContextType = React.useContext(FontContext);
     let range = Math.abs(props.axis.max - props.axis.min);
     let snap = 0.05
     const [value, setValue] = React.useState(props.axis.default);
@@ -40,8 +40,8 @@ function AxisSlider(props: AxisSliderProps) {
                 }
             }
             setValue(v)
-            props.font!.variations[props.axis.tag] = v as number;
-            props.font?.setVariations();
+            fc.font!.variations[props.axis.tag] = v as number;
+            fc.font?.setVariations();
             props.refresh();
         }}
         aria-labelledby="continuous-slider" />
@@ -64,7 +64,8 @@ const StyledAxisSlider = styled(AxisSlider)(({ theme }) => ({
 
 
 export function Axes(props: AxesProps) {
-    let axes: Record<string, Axis> | undefined = props.font?.axes;
+    const fc: FontContextType = React.useContext(FontContext);
+    let axes: Record<string, Axis> | undefined = fc.font?.axes;
     if (!axes || Object.keys(axes).length == 0) {
         return null;
     }
@@ -91,9 +92,9 @@ export function Axes(props: AxesProps) {
                                 <TableRow key={name}>
                                     <TableCell>{name}</TableCell>
                                     <TableCell>
-                                        <StyledAxisSlider axis={axis} refresh={props.refresh} font={props.font} />
+                                        <StyledAxisSlider axis={axis} refresh={props.refresh} />
                                     </TableCell>
-                                    <TableCell>{props.font?.variations[name]}</TableCell>
+                                    <TableCell>{fc.font?.variations[name]}</TableCell>
                                 </TableRow>
                             );
                         })}

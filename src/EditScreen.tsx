@@ -4,15 +4,7 @@ import { Paint } from './Paints';
 import * as SVG from "@svgdotjs/svg.js";
 import useMediaQuery from '@mui/material/useMediaQuery';
 import '@svgdotjs/svg.panzoom.js'
-
-interface EditScreenProps {
-    font: PainterFont | null,
-    selectedGid: number | null,
-    paintLayers: Paint[],
-    setPaintLayers: React.Dispatch<React.SetStateAction<Paint[]>>,
-    selectLayer: React.Dispatch<React.SetStateAction<number | null>>,
-    selectedLayer: number | null,
-}
+import { FontContext, FontContextType } from "./App";
 
 function deleteAllChildren(e: any) {
     let child = e.lastElementChild;
@@ -22,7 +14,8 @@ function deleteAllChildren(e: any) {
     }
 }
 
-export default function EditScreen(props: EditScreenProps) {
+export default function EditScreen() {
+    const fc: FontContextType = React.useContext(FontContext);
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
     const [zoomValue, setZoomValue] = React.useState<any>(null)
     const backgroundColor = React.useMemo(
@@ -31,17 +24,17 @@ export default function EditScreen(props: EditScreenProps) {
     );
     
     const svg = React.useRef(document.createElement("div"));
-    if (props.font && props.paintLayers.length > 0 && props.selectedGid != null) {
-        let svgEl = props.font.renderPaints(props.paintLayers, props.selectedGid);
-        if (props.selectedLayer != null) {
-            props.paintLayers[props.selectedLayer].onSelected();
+    if (fc.font && fc.paintLayers.length > 0 && fc.selectedGid != null) {
+        let svgEl = fc.font.renderPaints(fc.paintLayers, fc.selectedGid);
+        if (fc.selectedLayer != null) {
+            fc.paintLayers[fc.selectedLayer].onSelected();
         }
-        props.paintLayers.forEach((layer: Paint, index: number) => {
+        fc.paintLayers.forEach((layer: Paint, index: number) => {
             layer.rendering.on("click", () => {
-                props.selectLayer(index);
+                fc.selectLayer(index);
             })
             layer.rendering.on("refreshtree", () => {
-                props.setPaintLayers([...props.paintLayers]);
+                fc.setPaintLayers([...fc.paintLayers]);
             })
         })
         deleteAllChildren(svg.current);
@@ -65,7 +58,7 @@ export default function EditScreen(props: EditScreenProps) {
     }
     return (
         <div className="svgwrapper" style={{backgroundColor }}>
-            <div ref={svg} className="svgbox" onClick={() => props.selectLayer(null)}/>
+            <div ref={svg} className="svgbox" onClick={() => fc.selectLayer(null)} />
         </div>
     );
 

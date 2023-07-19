@@ -5,8 +5,7 @@ import { Paint as OTPaint } from "./fontkit-bits/tables/COLR";
 import * as SVG from "@svgdotjs/svg.js";
 import '@svgdotjs/svg.draggable.js'
 import './svg.resize.js'
-import { NormalizedLocation, VariationModel } from "./varmodel";
-import { VariableMatrix, MatrixType, matrixType } from "./VariableMatrix";
+import { VariableMatrix } from "./VariableMatrix";
 
 export let SELF_GID = -1
 
@@ -331,7 +330,7 @@ export class Paint {
 
     clone(): Paint {
         let newVersion = new Paint(this.gid, this.fill.clone(), new SVG.Matrix(), this._font, this.gid!)
-        newVersion.matrix = this.matrix.clone()
+        newVersion.matrix = this.matrix.clone() as VariableMatrix
         return newVersion
     }
 

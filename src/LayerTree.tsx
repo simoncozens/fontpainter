@@ -13,13 +13,13 @@ import LockIcon from '@mui/icons-material/Lock';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Accordion, AccordionDetails, AccordionSummary, SelectChangeEvent } from '@mui/material';
 import { Paint, SolidFill, SolidBlackFill, BlendMode, SELF_GID } from './Paints';
-import { matrixLabel } from './VariableMatrix';
-import { PainterFont, GlyphInfo } from './Font';
+import { GlyphInfo } from './Font';
 import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
 import { Autocomplete, ButtonBase, IconButton, Paper, Popover, TextField, Select, FormControl, MenuItem } from '@mui/material';
 import { Matrix } from '@svgdotjs/svg.js';
 import { createFilterOptions } from '@mui/material/Autocomplete';
 import { ContentCopy, ContentPaste } from '@mui/icons-material';
+import { FontContext, FontContextType } from "./App";
 
 const filterOptions = createFilterOptions({
   matchFrom: 'start',
@@ -39,7 +39,6 @@ type StyledTreeItemProps = TreeItemProps & {
     color?: string;
     colorForDarkMode?: string;
     paint: Paint;
-    font: PainterFont | null;
     redrawPaints: () => void;
 };
 
@@ -75,12 +74,12 @@ const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
 }));
 
 function StyledTreeItem(props: StyledTreeItemProps) {
+    const fc: FontContextType = React.useContext(FontContext);
     const theme = useTheme();
     const {
         bgColor,
         color,
         paint: Paint,
-        font: PainterFont,
         nodeId,
         label,
         colorForDarkMode,
@@ -144,30 +143,17 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                         </IconButton>
                     </Box>
                     <Box sx={{ paddingRight: 2 }}>
-                        <ButtonBase onClick={handleClick}>
-                            <ColorButton color={createColor((props.paint.fill as SolidFill).color)} />
-                        </ButtonBase>
-                        <Popover
-                            open={colorBoxOpen}
-                            anchorEl={anchorEl}
-                            onClose={() => setAnchorEl(null)}
-                        >
-                            <ColorBox
-                                defaultValue={paintColor}
-                                onChange={handleChange}
-                                palette={palette}
-                            />
-                        </Popover>
+                        <ColorButton color={createColor((props.paint.fill as SolidFill).color)} />
                     </Box>
-                    { renaming && props.font ?
+                    {renaming && fc.font ?
                         <Autocomplete
                             options={[
                                 { id: SELF_GID, name: "<Self>", unicode: null },
-                                ...props.font!.glyphInfos()
+                                ...fc.font!.glyphInfos()
                             ]}
                             getOptionLabel={(option) => option.name}
                             sx={{ fontWeight: 'inherit', flexGrow: 1 }}
-                            value={props.paint.gid ? props.font!.glyphInfos()[props.paint.gid] : null}
+                            value={props.paint.gid ? fc.font!.glyphInfos()[props.paint.gid] : null}
                             renderInput={(params) => <TextField {...params} />}
                             filterOptions={filterOptions}
                             autoHighlight={true}
@@ -189,14 +175,14 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                         </Typography>
                     }
                     <Typography variant="caption" sx={{ fontWeight: 'inherit' }}>
-                        {matrixLabel(props.paint.current_matrix)}
+                        {props.paint.matrix.label_value(props.paint.current_matrix)}
                     </Typography>
                 </Box>
             }
             style={styleProps}
             {...other}
         >
-            {null && 
+            {
             <StyledTreeItemRoot nodeId={nodeId.toString() + ".fill"}
                 label={
                     <Box
@@ -207,10 +193,34 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                         }}
                     >
                         <Box sx={{ paddingRight: 2 }}>
-                            <Typography variant="body2" sx={{ fontWeight: 'inherit' }}>
-                                Fill {props.paint.fill.description}
+                            <Typography sx={{ fontWeight: 'bold' }}>
+                                Fill
                             </Typography>
                         </Box>
+                        <Box sx={{ paddingRight: 2 }}>
+                            {props.paint.fill instanceof SolidFill ? "Solid " : "Gradient"}
+                        </Box>
+                        <Box sx={{ paddingRight: 2 }}>
+                            <ButtonBase onClick={handleClick}>
+                                <ColorButton color={createColor((props.paint.fill as SolidFill).color)} />
+                            </ButtonBase>
+                            <Popover
+                                open={colorBoxOpen}
+                                anchorEl={anchorEl}
+                                onClose={() => setAnchorEl(null)}
+                            >
+                                <ColorBox
+                                    defaultValue={paintColor}
+                                    onChange={handleChange}
+                                    palette={palette}
+                                />
+                            </Popover>
+                        </Box>
+                        <Box sx={{ paddingRight: 2 }}>
+                            Opacity:
+                            <TextField type={"number"} />
+                        </Box>
+
                     </Box>
                 } />
             }
@@ -219,44 +229,37 @@ function StyledTreeItem(props: StyledTreeItemProps) {
     );
 }
 
-interface LayerTreeProps {
-    font: PainterFont | null,
-    selectLayer: React.Dispatch<React.SetStateAction<number | null>>,
-    selectedLayer: number | null,
-    selectedGid: number | null,
-    paintLayers: Paint[],
-    setPaintLayers: (p: Paint[]) => void,
-    clipboard: Paint[] | null,
-    setClipboard: React.Dispatch<React.SetStateAction<Paint[] | null>>,
-}
+export default function LayerTree() {
+    const fc: FontContextType = React.useContext(FontContext);
 
-export default function LayerTree(props: LayerTreeProps) {
     const [blendMode, setBlendMode] = React.useState<BlendMode>(BlendMode.Normal);
 
     function nodeSelect(event: React.SyntheticEvent, nodeIds: Array<string> | string) {
         let selectedIndex = parseInt(nodeIds as string, 10);
-        for (let i = 0; i < props.paintLayers.length; i++) {
-            if (i == selectedIndex) {
-                props.paintLayers[i].onSelected()
-                setBlendMode(props.paintLayers[i].blendMode)
-            } else {
-                props.paintLayers[i].onDeselected()
+        if (fc.paintLayers) {
+            for (let i = 0; i < fc.paintLayers.length; i++) {
+                if (i == selectedIndex) {
+                    fc.paintLayers[i].onSelected()
+                    setBlendMode(fc.paintLayers[i].blendMode)
+                } else {
+                    fc.paintLayers[i].onDeselected()
+                }
             }
+            fc.selectLayer(selectedIndex)
         }
-        props.selectLayer(selectedIndex)
     }
 
     function changeBlendMode(event: SelectChangeEvent<BlendMode>) {
-        if (props.selectedLayer !== null) {
-            props.paintLayers[props.selectedLayer].blendMode = event.target.value as BlendMode;
+        if (fc.selectedLayer !== null) {
+            fc.paintLayers![fc.selectedLayer].blendMode = event.target.value as BlendMode;
             setBlendMode(event.target.value as BlendMode)
-            props.setPaintLayers(([] as Paint[]).concat(props.paintLayers));
-            props.selectLayer(props.selectedLayer)
+            fc.setPaintLayers(([] as Paint[]).concat(fc.paintLayers!));
+            fc.selectLayer(fc.selectedLayer)
         }
     }
 
     return (
-        <Accordion sx={{ width: '100%' }} defaultExpanded={props.font !== null} disabled={!props.font}>
+        <Accordion sx={{ width: '100%' }} defaultExpanded={fc.font !== null} disabled={!fc.font}>
             <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
             >
@@ -275,7 +278,7 @@ export default function LayerTree(props: LayerTreeProps) {
                             SelectDisplayProps={{ style: { paddingTop: 8, paddingBottom: 8 } }}
                             variant="standard"
                             disableUnderline={true}
-                            disabled={props.selectedLayer === null}
+                            disabled={fc.selectedLayer === null}
                             value={blendMode}
                             label="Blend Mode"
                             onChange={changeBlendMode}
@@ -305,14 +308,14 @@ export default function LayerTree(props: LayerTreeProps) {
                 defaultExpandIcon={<ArrowRightIcon />}
                 defaultEndIcon={<div style={{ width: 24 }} />}
                 onNodeSelect={nodeSelect}
-                selected={props.selectedLayer?.toString() || ""}
+                    selected={fc.selectedLayer?.toString() || ""}
                 sx={{ flexGrow: 1, overflowY: 'auto' }}
             >
-                {props.paintLayers.map((p: Paint, i: number) => <StyledTreeItem
-                    nodeId={i.toString()}
-                    label={(props.paintLayers.length - i).toString()}
-                    paint={p} font={props.font} redrawPaints={() => {
-                    props.setPaintLayers(([] as Paint[]).concat(props.paintLayers));
+                    {fc.paintLayers!.map((p: Paint, i: number) => <StyledTreeItem
+                        nodeId={i.toString()}
+                        label={(fc.paintLayers!.length - i).toString()}
+                        paint={p} redrawPaints={() => {
+                            fc.setPaintLayers(([] as Paint[]).concat(fc.paintLayers!));
                 }
                 }>
                 </StyledTreeItem>)}
@@ -326,12 +329,12 @@ export default function LayerTree(props: LayerTreeProps) {
                 >
                     <Box>
                     <IconButton
-                        disabled={props.selectedLayer === null || props.paintLayers[props.selectedLayer]?.locked}
+                            disabled={fc.selectedLayer === null || fc.paintLayers![fc.selectedLayer]?.locked}
                         onClick={ () => {
-                            if (props.selectedLayer !== null) {
-                                props.paintLayers.splice(props.selectedLayer, 1);
-                                props.setPaintLayers(([] as Paint[]).concat(props.paintLayers));
-                                props.selectLayer(null);
+                            if (fc.selectedLayer !== null) {
+                                fc.paintLayers!.splice(fc.selectedLayer, 1);
+                                fc.setPaintLayers(([] as Paint[]).concat(fc.paintLayers!));
+                                fc.selectLayer(null);
                             }
                         }}
                     >
@@ -339,38 +342,38 @@ export default function LayerTree(props: LayerTreeProps) {
                     </IconButton>
                     </Box>
                     <Box>
-                    <IconButton disabled={!props.font}  onClick={
+                        <IconButton disabled={!fc.font} onClick={
                             () => {
-                                props.paintLayers.splice(0, 0, new Paint(
+                                fc.paintLayers!.splice(0, 0, new Paint(
                                     SELF_GID,
                                     SolidBlackFill(),
                                     new Matrix(),
-                                    props.font!,
-                                    props.selectedGid!
+                                    fc.font!,
+                                    fc.selectedGid!
                                 ));
-                                props.setPaintLayers(([] as Paint[]).concat(props.paintLayers));
-                                props.selectLayer(0);
+                                fc.setPaintLayers(([] as Paint[]).concat(fc.paintLayers!));
+                                fc.selectLayer(0);
                             }
                         } >
                         <NoteAddIcon/>
                     </IconButton>
                     </Box>
                     <Box>
-                        <IconButton disabled={props.paintLayers.length === 0}
-                            onClick={() => props.setClipboard(props.paintLayers.map(p => p.clone()))}
+                        <IconButton disabled={fc.paintLayers!.length === 0}
+                            onClick={() => fc.setClipboard(fc.paintLayers!.map(p => p.clone()))}
                         >
                             <ContentCopy />
                         </IconButton>
                     </Box>
                     <Box>
-                        <IconButton disabled={!props.clipboard || !props.font || !props.selectedGid}
+                        <IconButton disabled={!fc.clipboard || !fc.font || !fc.selectedGid}
                             onClick={() => {
-                                let clonedFromClipboard = props.clipboard!.map(p => p.clone())
-                                props.font!.paints.set(props.selectedGid!, clonedFromClipboard)
-                                console.log("Setting paints of ", props.selectedGid, " to")
-                                props.setPaintLayers(clonedFromClipboard)
-                                console.log(props.paintLayers)
-                                props.selectLayer(null);
+                                let clonedFromClipboard = fc.clipboard!.map(p => p.clone())
+                                fc.font!.paints.set(fc.selectedGid!, clonedFromClipboard)
+                                console.log("Setting paints of ", fc.selectedGid, " to")
+                                fc.setPaintLayers(clonedFromClipboard)
+                                console.log(fc.paintLayers)
+                                fc.selectLayer(null);
                             }}
                         >
                             <ContentPaste />
