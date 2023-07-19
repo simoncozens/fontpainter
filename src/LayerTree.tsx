@@ -11,7 +11,7 @@ import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LockIcon from '@mui/icons-material/Lock';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Accordion, AccordionDetails, AccordionSummary, InputAdornment, SelectChangeEvent } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, InputAdornment, SelectChangeEvent, Tooltip } from '@mui/material';
 import { Paint, SolidFill, SolidBlackFill, BlendMode, SELF_GID } from './Paints';
 import { GlyphInfo } from './Font';
 import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
@@ -154,7 +154,9 @@ function FillItem(props: FillItemProps) {
                 />
                 <Box sx={{ paddingRight: 2 }}>
                     <IconButton onClick={() => fc.selectVariableThing((props.paint.fill as SolidFill).opacity)}>
-                        <MultipleStop />
+                        <Tooltip title="Edit variable">
+                            <MultipleStop />
+                        </Tooltip>
                     </IconButton>
                 </Box>
 
@@ -196,7 +198,9 @@ function TransformItem(props: TransformItemProps) {
                 </Box>
                 <Box sx={{ paddingRight: 2 }}>
                     <IconButton onClick={handleClick}>
-                        <MultipleStop />
+                        <Tooltip title="Edit variable">
+                            <MultipleStop />
+                        </Tooltip>
                     </IconButton>
                 </Box>
             </Box>
@@ -250,7 +254,9 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                     </Box>
                     <Box sx={{ paddingRight: 2 }}>
                         <IconButton onClick={toggleLocked}>
-                            {props.paint.locked ? <LockIcon /> : <Icon />}
+                            <Tooltip title="Locked">
+                                {props.paint.locked ? <LockIcon /> : <Icon />}
+                            </Tooltip>
                         </IconButton>
                     </Box>
                     <Box sx={{ paddingRight: 2 }}>
@@ -408,7 +414,9 @@ export default function LayerTree() {
                             }
                         }}
                     >
-                        <DeleteIcon />
+                            <Tooltip title="Delete layer">
+                                <DeleteIcon />
+                            </Tooltip>
                     </IconButton>
                     </Box>
                     <Box>
@@ -425,14 +433,18 @@ export default function LayerTree() {
                                 fc.selectLayer(0);
                             }
                         } >
-                        <NoteAddIcon/>
+                            <Tooltip title="Add new layer">
+                                <NoteAddIcon />
+                            </Tooltip>
                     </IconButton>
                     </Box>
                     <Box>
                         <IconButton disabled={fc.paintLayers!.length === 0}
                             onClick={() => fc.setClipboard(fc.paintLayers!.map(p => p.clone()))}
                         >
-                            <ContentCopy />
+                            <Tooltip title="Copy all layers to clipboard">
+                                <ContentCopy />
+                            </Tooltip>
                         </IconButton>
                     </Box>
                     <Box>
@@ -446,7 +458,9 @@ export default function LayerTree() {
                                 fc.selectLayer(null);
                             }}
                         >
-                            <ContentPaste />
+                            <Tooltip title="Paste all layers from clipboard">
+                                <ContentPaste />
+                            </Tooltip>
                         </IconButton>
                     </Box>
                 </Paper>
