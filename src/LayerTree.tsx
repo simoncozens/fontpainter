@@ -82,6 +82,7 @@ type FillItemProps = TreeItemProps & {
 };
 
 function FillItem(props: FillItemProps) {
+    const fc: FontContextType = React.useContext(FontContext);
     const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
         setAnchorEl(event.currentTarget);
@@ -147,7 +148,7 @@ function FillItem(props: FillItemProps) {
                     }}
                 />
                 <Box sx={{ paddingRight: 2 }}>
-                    <IconButton onClick={handleClick}>
+                    <IconButton onClick={() => fc.selectVariableThing((props.paint.fill as SolidFill).opacity)}>
                         <MultipleStop />
                     </IconButton>
                 </Box>
