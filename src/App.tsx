@@ -96,8 +96,8 @@ export default function App() {
 
           <Grid container spacing={2}>
             <Grid item xs={4}>
-              <Axes refresh={() => setPaintLayers([...paintLayers])} />
               <GlyphGrid />
+              <Axes refresh={() => setPaintLayers([...paintLayers])} />
               <LayerTree />
 
               {selectedVariableThing && <Variability variation={selectedVariableThing} />}
