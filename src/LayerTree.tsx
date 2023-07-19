@@ -146,6 +146,11 @@ function FillItem(props: FillItemProps) {
                         inputProps: { min: 0, max: 100 }, endAdornment:
                             <InputAdornment position="end">%</InputAdornment>,
                     }}
+                    value={(props.paint.fill as SolidFill).current_opacity * 100}
+                    onChange={(evt) => {
+                        (props.paint.fill as SolidFill).opacity.addValue(fc.font!.normalizedLocation, parseInt(evt.target.value) / 100.0);
+                        props.redrawPaints();
+                    }}
                 />
                 <Box sx={{ paddingRight: 2 }}>
                     <IconButton onClick={() => fc.selectVariableThing((props.paint.fill as SolidFill).opacity)}>

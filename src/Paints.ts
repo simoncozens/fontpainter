@@ -374,7 +374,7 @@ export class Paint {
 
         if (this.fill instanceof SolidFill) {
             this.rendering.attr({ "fill": this.fill.color });
-            this.rendering.attr({ "fill-opacity": this.fill.opacity.toString() });
+            this.rendering.attr({ "fill-opacity": (this.fill.current_opacity * 100).toString() + "%" });
         } else if (this.fill instanceof LinearGradientFill && header != null) {
             let gradient = this.fill.toSVG(header)
             this.rendering.attr({ "fill": gradient })
