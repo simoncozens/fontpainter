@@ -18,7 +18,7 @@ import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
 import { Autocomplete, ButtonBase, IconButton, Paper, Popover, TextField, Select, FormControl, MenuItem } from '@mui/material';
 import { Matrix } from '@svgdotjs/svg.js';
 import { createFilterOptions } from '@mui/material/Autocomplete';
-import { ContentCopy, ContentPaste } from '@mui/icons-material';
+import { ContentCopy, ContentPaste, MultipleStop } from '@mui/icons-material';
 import { FontContext, FontContextType } from "./App";
 
 const filterOptions = createFilterOptions({
@@ -32,6 +32,7 @@ declare module 'react' {
         '--tree-view-bg-color'?: string;
     }
 }
+
 
 type StyledTreeItemProps = TreeItemProps & {
     bgColor?: string;
@@ -73,6 +74,112 @@ const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
     },
 }));
 
+
+type FillItemProps = TreeItemProps & {
+    nodeId: String,
+    paint: Paint;
+    redrawPaints: () => void;
+};
+
+function FillItem(props: FillItemProps) {
+    const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const colorBoxOpen = Boolean(anchorEl);
+    const [paintColor, setPaintColor] = React.useState(createColor((props.paint.fill as SolidFill).color));
+    // XXX Too slow
+    // let [_, basepalette] = props.paint._font.saveColr();
+    let palette: Record<string, string> = {};
+    // for (var colorString of basepalette.colors||[]) {
+    //     palette[colorString] = colorString;
+    // }
+
+    const handleChange = (newValue: Color) => {
+        console.log("Setting colour of paint", props.paint, " to ", newValue);
+        (props.paint.fill as SolidFill).color = "#" + newValue.hex;
+        setPaintColor(newValue);
+        props.redrawPaints();
+    }
+    return <StyledTreeItemRoot nodeId={props.nodeId}
+        label={
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    pr: 0,
+                }}
+            >
+                <Box sx={{ paddingRight: 2 }}>
+                    <Typography sx={{ fontWeight: 'bold' }}>
+                        Fill
+                    </Typography>
+                </Box>
+                <Box sx={{ paddingRight: 2 }}>
+                    {props.paint.fill instanceof SolidFill ? "Solid " : "Gradient"}
+                </Box>
+                <Box sx={{ paddingRight: 2 }}>
+                    <ButtonBase onClick={handleClick}>
+                        <ColorButton color={createColor((props.paint.fill as SolidFill).color)} />
+                    </ButtonBase>
+                    <Popover
+                        open={colorBoxOpen}
+                        anchorEl={anchorEl}
+                        onClose={() => setAnchorEl(null)}
+                    >
+                        <ColorBox
+                            defaultValue={paintColor}
+                            onChange={handleChange}
+                            palette={palette}
+                        />
+                    </Popover>
+                </Box>
+                <Box sx={{ paddingRight: 2 }}>
+                    Opacity:
+                    <TextField type={"number"} />
+                </Box>
+
+            </Box>
+        } />
+}
+
+type TransformItemProps = TreeItemProps & {
+    nodeId: String,
+    paint: Paint;
+    redrawPaints: () => void;
+};
+
+function TransformItem(props: TransformItemProps) {
+    const fc: FontContextType = React.useContext(FontContext);
+    let matrix = props.paint.current_matrix
+    let handleClick = () => {
+        fc.selectVariableThing(props.paint.matrix)
+    }
+
+    return <StyledTreeItemRoot nodeId={props.nodeId}
+        label={
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    pr: 0,
+                }}
+            >
+                <Box sx={{ paddingRight: 2 }}>
+                    <Typography sx={{ fontWeight: 'bold' }}>
+                        {props.paint.matrix.label_value(props.paint.current_matrix)}
+                    </Typography>
+                </Box>
+                <Box sx={{ paddingRight: 2 }}>
+                    <IconButton onClick={handleClick}>
+                        <MultipleStop />
+                    </IconButton>
+                </Box>
+            </Box>
+        } />
+}
+
+
 function StyledTreeItem(props: StyledTreeItemProps) {
     const fc: FontContextType = React.useContext(FontContext);
     const theme = useTheme();
@@ -93,27 +200,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
         '--tree-view-bg-color':
             theme.palette.mode !== 'dark' ? bgColor : bgColorForDarkMode,
     };
-    const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
     const [renaming, setRenaming] = React.useState<boolean>(false);
-    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-        setAnchorEl(event.currentTarget);
-    };
-    const colorBoxOpen = Boolean(anchorEl);
-    const [paintColor, setPaintColor] = React.useState(createColor((props.paint.fill as SolidFill).color));
-
-    const handleChange = (newValue: Color) => {
-        console.log("Setting colour of paint", props.paint, " to ", newValue);
-        (props.paint.fill as SolidFill).color = "#" + newValue.hex;
-        setPaintColor(newValue);
-        redrawPaints();
-    }
-
-    // XXX Too slow
-    // let [_, basepalette] = props.paint._font.saveColr();
-    let palette: Record<string, string> = {};
-    // for (var colorString of basepalette.colors||[]) {
-    //     palette[colorString] = colorString;
-    // }
 
     let toggleLocked = () => {
         props.paint.locked = !props.paint.locked;
@@ -182,49 +269,8 @@ function StyledTreeItem(props: StyledTreeItemProps) {
             style={styleProps}
             {...other}
         >
-            {
-            <StyledTreeItemRoot nodeId={nodeId.toString() + ".fill"}
-                label={
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            pr: 0,
-                        }}
-                    >
-                        <Box sx={{ paddingRight: 2 }}>
-                            <Typography sx={{ fontWeight: 'bold' }}>
-                                Fill
-                            </Typography>
-                        </Box>
-                        <Box sx={{ paddingRight: 2 }}>
-                            {props.paint.fill instanceof SolidFill ? "Solid " : "Gradient"}
-                        </Box>
-                        <Box sx={{ paddingRight: 2 }}>
-                            <ButtonBase onClick={handleClick}>
-                                <ColorButton color={createColor((props.paint.fill as SolidFill).color)} />
-                            </ButtonBase>
-                            <Popover
-                                open={colorBoxOpen}
-                                anchorEl={anchorEl}
-                                onClose={() => setAnchorEl(null)}
-                            >
-                                <ColorBox
-                                    defaultValue={paintColor}
-                                    onChange={handleChange}
-                                    palette={palette}
-                                />
-                            </Popover>
-                        </Box>
-                        <Box sx={{ paddingRight: 2 }}>
-                            Opacity:
-                            <TextField type={"number"} />
-                        </Box>
-
-                    </Box>
-                } />
-            }
-
+            <FillItem nodeId={nodeId.toString() + ".fill"} paint={props.paint} redrawPaints={props.redrawPaints} />
+            <TransformItem nodeId={nodeId.toString() + ".transform"} paint={props.paint} redrawPaints={props.redrawPaints} />
         </StyledTreeItemRoot>
     );
 }

@@ -29,6 +29,8 @@ export type FontContextType = {
   setClipboard: React.Dispatch<React.SetStateAction<Paint[] | null>>;
   selectedLayer: number | null,
   selectLayer: React.Dispatch<React.SetStateAction<number | null>>;
+  selectedVariableThing: VariableThing<any> | null,
+  selectVariableThing: React.Dispatch<React.SetStateAction<VariableThing<any> | null>>;
 };
 
 export const FontContext = createContext<FontContextType>({
@@ -41,7 +43,9 @@ export const FontContext = createContext<FontContextType>({
   clipboard: null,
   setClipboard: (f) => { },
   selectedLayer: null,
-  selectLayer: (f) => { }
+  selectLayer: (f) => { },
+  selectedVariableThing: null,
+  selectVariableThing: (f) => { }
 });
 
 
@@ -86,7 +90,7 @@ export default function App() {
       {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
       <CssBaseline />
 
-      <FontContext.Provider value={{ font, setFont, selectedGid, selectGid: doSelectGid, paintLayers, setPaintLayers: wrappedSetPaintLayers, clipboard, setClipboard, selectedLayer, selectLayer }}>
+      <FontContext.Provider value={{ font, setFont, selectedGid, selectGid: doSelectGid, paintLayers, setPaintLayers: wrappedSetPaintLayers, clipboard, setClipboard, selectedLayer, selectLayer, selectVariableThing, selectedVariableThing }}>
         <Box sx={{ flexGrow: 1 }}>
           <TopMenu />
 
@@ -95,7 +99,8 @@ export default function App() {
               <Axes refresh={() => setPaintLayers([...paintLayers])} />
               <GlyphGrid />
               <LayerTree />
-              <Variability variation={selectedVariableThing} />
+
+              {selectedVariableThing && <Variability variation={selectedVariableThing} />}
               <Developer />
             </Grid>
             <Grid item xs={8}>
