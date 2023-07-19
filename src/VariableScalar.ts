@@ -15,11 +15,7 @@ function parseKey(s: string): NormalizedLocation {
 
 type OTConvertor<T> = (n: T) => number;
 
-interface Stringifiable {
-    toString(): string
-}
-
-export abstract class VariableThing<T extends Stringifiable> {
+export abstract class VariableThing<T> {
     values: Map<string, T>;
     interpolation_cache: Map<string, T>;
     _model: VariationModel | null = null;
@@ -64,6 +60,7 @@ export abstract class VariableThing<T extends Stringifiable> {
     }
     abstract factory(axes: string[]): VariableThing<T>;
     abstract clone_value(v: T): T;
+    abstract label_value(v: T): string;
 
     get doesVary(): boolean {
         return this.values.size > 1;
@@ -95,7 +92,7 @@ export abstract class VariableThing<T extends Stringifiable> {
             return value;
         } else {
             let scalars = this.model!.getScalars(loc);
-            let masters = this.values.values();
+            let masters = Array.from(this.values.values());
             let val = this._valueFromMastersAndScalars(masters, scalars);
             this.interpolation_cache.set(key, val);
             return val;
@@ -120,7 +117,7 @@ export abstract class VariableThing<T extends Stringifiable> {
     }
 
     abstract identity(): T
-    abstract _valueFromMastersAndScalars(masters: IterableIterator<T>, scalars: number[]): T
+    abstract _valueFromMastersAndScalars(masters: T[], scalars: number[]): T
 }
 
 export class VariableScalar extends VariableThing<number> {
@@ -129,9 +126,10 @@ export class VariableScalar extends VariableThing<number> {
         return new VariableScalar(axes)
     }
     clone_value(v: number) { return v }
-    _valueFromMastersAndScalars(masters: IterableIterator<number>, scalars: number[]): number {
+    label_value(v: number) { return v.toString() }
+    _valueFromMastersAndScalars(masters: number[], scalars: number[]): number {
         return this.model!.interpolateFromMastersAndScalars(
-            Array.from(masters),
+            masters,
             scalars
         ) || 0;
     }

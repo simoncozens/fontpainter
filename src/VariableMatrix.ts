@@ -59,11 +59,10 @@ export class VariableMatrix extends VariableThing<Matrix> {
             )})`;
         }
     }
-    _valueFromMastersAndScalars(masters: IterableIterator<Matrix>, scalars: number[]): Matrix {
+    _valueFromMastersAndScalars(masters: Matrix[], scalars: number[]): Matrix {
         let outmatrix = new Matrix();
         for (var element of ["a", "b", "c", "d", "e", "f"]) {
-            let components: number[] = Array.from(
-                masters,
+            let components: number[] = masters.map(
                 (matrix) => matrix[element]
             );
             outmatrix[

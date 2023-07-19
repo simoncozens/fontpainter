@@ -299,7 +299,7 @@ export class VariationModel {
 	}
 
 	getDeltas(masterValues: number[]): number[] {
-		console.assert(masterValues.length == this.deltaWeights.length);
+		console.assert(masterValues.length == this.deltaWeights.length, "There were %i master values but %i delta weights", masterValues.length, this.deltaWeights.length);
 		let mapping = this.reverseMapping;
 		let out: number[] = [];
 		this.deltaWeights.forEach((weights, i) => {
