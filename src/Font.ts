@@ -115,10 +115,14 @@ export class PainterFont {
     return this.fkFont.familyName
   }
 
+  get numGlyphs(): number {
+    return this.fkFont.numGlyphs
+  }
+
   glyphInfos(): GlyphInfo[] {
     if (this.glyphInfoCache.length == 0) {
       var id = 0;
-      while (id < this.fkFont.numGlyphs) {
+      while (id < this.numGlyphs) {
         let glyph = this.fkFont.getGlyph(id)
         var name = glyph.name;
         var unicode = null;
