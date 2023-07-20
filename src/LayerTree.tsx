@@ -11,19 +11,19 @@ import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LockIcon from '@mui/icons-material/Lock';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Accordion, AccordionDetails, AccordionSummary, InputAdornment, SelectChangeEvent, Tooltip } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, InputAdornment, SelectChangeEvent, Tooltip } from '@mui/material';
 import { Paint, SolidFill, SolidBlackFill, BlendMode, SELF_GID } from './Paints';
 import { GlyphInfo } from './Font';
 import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
 import { Autocomplete, ButtonBase, IconButton, Paper, Popover, TextField, Select, FormControl, MenuItem } from '@mui/material';
 import { Matrix } from '@svgdotjs/svg.js';
 import { createFilterOptions } from '@mui/material/Autocomplete';
-import { ContentCopy, ContentPaste, MultipleStop } from '@mui/icons-material';
+import { ContentCopy, ContentPaste, ContentPasteGoTwoTone, MultipleStop } from '@mui/icons-material';
 import { FontContext, FontContextType } from "./App";
 
 const filterOptions = createFilterOptions({
-  matchFrom: 'start',
-  stringify: (option: GlyphInfo) => option.name,
+    matchFrom: 'start',
+    stringify: (option: GlyphInfo) => option.name,
 });
 
 declare module 'react' {
@@ -97,7 +97,6 @@ function FillItem(props: FillItemProps) {
     // }
 
     const handleChange = (newValue: Color) => {
-        console.log("Setting colour of paint", props.paint, " to ", newValue);
         (props.paint.fill as SolidFill).color = "#" + newValue.hex;
         setPaintColor(newValue);
         props.redrawPaints();
@@ -305,10 +304,57 @@ function StyledTreeItem(props: StyledTreeItemProps) {
     );
 }
 
+
+export interface ConfirmDialogProps {
+    open: boolean;
+    onClose: () => void;
+}
+
+function ConfirmPasteAllDialog(props: ConfirmDialogProps) {
+    const { onClose, open } = props;
+    const fc: FontContextType = React.useContext(FontContext);
+    const handleOk = () => {
+        let gid = 0;
+        while (gid < fc.font!.numGlyphs) {
+            let clonedFromClipboard = fc.clipboard!.map(p => p.clone())
+            fc.font!.paints.set(gid, clonedFromClipboard)
+            gid += 1;
+        }
+        fc.selectLayer(null);
+        onClose();
+    };
+
+    return (
+        <Dialog
+            open={props.open}
+            sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
+            maxWidth="xs"
+        >
+            <DialogTitle>Paste to all layers?</DialogTitle>
+            <DialogContent dividers>
+                <DialogContentText>
+                    This will replace the contents of <i>all layers in all
+                        glyphs</i> with the contents of the clipboard. This is
+                    an extremely destructive operation. Are you sure you want
+                    to do this?
+                </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+                <Button autoFocus onClick={onClose}>
+                    Cancel
+                </Button>
+                <Button onClick={handleOk}>Ok</Button>
+            </DialogActions>
+        </Dialog>
+    );
+}
+
+
 export default function LayerTree() {
     const fc: FontContextType = React.useContext(FontContext);
 
     const [blendMode, setBlendMode] = React.useState<BlendMode>(BlendMode.Normal);
+    const [dialogOpen, setDialogOpen] = React.useState(false);
 
     function nodeSelect(event: React.SyntheticEvent, nodeIds: Array<string> | string) {
         let selectedIndex = parseInt(nodeIds as string, 10);
@@ -406,20 +452,20 @@ export default function LayerTree() {
                     }}
                 >
                     <Box>
-                    <IconButton
+                        <IconButton
                             disabled={fc.selectedLayer === null || fc.paintLayers![fc.selectedLayer]?.locked}
-                        onClick={ () => {
-                            if (fc.selectedLayer !== null) {
-                                fc.paintLayers!.splice(fc.selectedLayer, 1);
-                                fc.setPaintLayers(([] as Paint[]).concat(fc.paintLayers!));
-                                fc.selectLayer(null);
-                            }
-                        }}
-                    >
+                            onClick={() => {
+                                if (fc.selectedLayer !== null) {
+                                    fc.paintLayers!.splice(fc.selectedLayer, 1);
+                                    fc.setPaintLayers(([] as Paint[]).concat(fc.paintLayers!));
+                                    fc.selectLayer(null);
+                                }
+                            }}
+                        >
                             <Tooltip title="Delete layer">
                                 <DeleteIcon />
                             </Tooltip>
-                    </IconButton>
+                        </IconButton>
                     </Box>
                     <Box>
                         <IconButton disabled={!fc.font} onClick={
@@ -438,7 +484,7 @@ export default function LayerTree() {
                             <Tooltip title="Add new layer">
                                 <NoteAddIcon />
                             </Tooltip>
-                    </IconButton>
+                        </IconButton>
                     </Box>
                     <Box>
                         <IconButton disabled={fc.paintLayers!.length === 0}
@@ -454,9 +500,7 @@ export default function LayerTree() {
                             onClick={() => {
                                 let clonedFromClipboard = fc.clipboard!.map(p => p.clone())
                                 fc.font!.paints.set(fc.selectedGid!, clonedFromClipboard)
-                                console.log("Setting paints of ", fc.selectedGid, " to")
                                 fc.setPaintLayers(clonedFromClipboard)
-                                console.log(fc.paintLayers)
                                 fc.selectLayer(null);
                             }}
                         >
@@ -465,6 +509,17 @@ export default function LayerTree() {
                             </Tooltip>
                         </IconButton>
                     </Box>
+                    <Box>
+                        <IconButton disabled={!fc.clipboard || !fc.font || !fc.selectedGid}
+                            onClick={() => setDialogOpen(true)}
+                        >
+                            <Tooltip title="Paste all layers to all glyphs">
+                                <ContentPasteGoTwoTone />
+                            </Tooltip>
+                        </IconButton>
+                        <ConfirmPasteAllDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
+                    </Box>
+
                 </Paper>
             </AccordionDetails>
         </Accordion>
