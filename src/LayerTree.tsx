@@ -352,7 +352,7 @@ function ConfirmPasteAllDialog(props: ConfirmDialogProps) {
             sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
             maxWidth="xs"
         >
-            <DialogTitle>Paste to all layers?</DialogTitle>
+            <DialogTitle>Paste to all glyphs?</DialogTitle>
             <DialogContent dividers>
                 <DialogContentText>
                     This will replace the contents of <i>all layers in all
