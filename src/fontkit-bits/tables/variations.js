@@ -178,6 +178,15 @@ DeltaSetIndexMap.preEncode = function (val, stream) {
   }
 }
 
+DeltaSetIndexMap.size = function (val, ctx) {
+  this.preEncode.call(val);
+  let size = 4 + val.mapCount * (1 + ((val.entryFormat & 0x0030) >> 4));
+  if (val.version == 1) {
+    size += 2;
+  }
+  return size;
+}
+
 /**********************
  * Feature Variations *
  **********************/
