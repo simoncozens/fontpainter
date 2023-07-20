@@ -4,7 +4,7 @@ import '@svgdotjs/svg.draggable.js'
 import { add_table } from "fontwriter";
 
 import { Font, create } from "fontkit";
-import { Paint, Palette, SolidFill, SELF_GID, LinearGradientFill, GradientStop, SolidBlackFill } from "./Paints";
+import { Paint, SELF_GID, SolidBlackFill } from "./Paints";
 import { COLR } from "./fontkit-bits/tables/COLR";
 import CPAL from "./fontkit-bits/tables/CPAL";
 
