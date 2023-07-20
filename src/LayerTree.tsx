@@ -2,7 +2,7 @@ import * as React from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Icon from '@mui/material/Icon';
-import TreeView from '@mui/lab/TreeView';
+import KeylessTreeView from './mui-bits/TreeView';
 import TreeItem, { TreeItemProps, treeItemClasses } from '@mui/lab/TreeItem';
 import Typography from '@mui/material/Typography';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -379,23 +379,25 @@ export default function LayerTree() {
                         </Select>
                     </FormControl>
                 </Paper>
-            <TreeView
-                defaultCollapseIcon={<ArrowDropDownIcon />}
-                defaultExpandIcon={<ArrowRightIcon />}
-                defaultEndIcon={<div style={{ width: 24 }} />}
-                onNodeSelect={nodeSelect}
+                {/* 
+                // @ts-ignore */}
+                <KeylessTreeView
+                    defaultCollapseIcon={<ArrowDropDownIcon />}
+                    defaultExpandIcon={<ArrowRightIcon />}
+                    defaultEndIcon={<div style={{ width: 24 }} />}
+                    onNodeSelect={nodeSelect}
                     selected={fc.selectedLayer?.toString() || ""}
-                sx={{ flexGrow: 1, overflowY: 'auto' }}
-            >
+                    sx={{ flexGrow: 1, overflowY: 'auto' }}
+                >
                     {fc.paintLayers!.map((p: Paint, i: number) => <StyledTreeItem
                         nodeId={i.toString()}
                         label={(fc.paintLayers!.length - i).toString()}
                         paint={p} redrawPaints={() => {
                             fc.setPaintLayers(([] as Paint[]).concat(fc.paintLayers!));
-                }
-                }>
-                </StyledTreeItem>)}
-            </TreeView>
+                        }
+                        }>
+                    </StyledTreeItem>)}
+                </KeylessTreeView>
                 <Paper
                     sx={{
                         display: 'flex',
