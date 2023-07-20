@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 import { DropzoneDialogBase } from "mui-file-dropzone";
 import { PainterFont } from "./Font";
 import { FontContext, FontContextType } from "./App";
+import { Chip } from '@mui/material';
 
 interface FontDropProps {
     open: boolean,
@@ -101,9 +102,10 @@ export default function TopMenu() {
                     </MenuItem>
                 </Menu>
                 <FontDrop open={dropDialogOpen} setOpen={setDropDialogOpen} />
-                <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                <Typography variant="h6" component="div" sx={{ mr: 2}}>
                     FontPainter
                 </Typography>
+                <Chip label="alpha" color="error" />
             </Toolbar>
         </AppBar>
     )
