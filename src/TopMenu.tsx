@@ -42,7 +42,7 @@ function FontDrop(props: FontDropProps) {
             maxFileSize={5000000}
             open={props.open}
             onAdd={newFileObjs => {
-                fc.setFont(new PainterFont(newFileObjs[0].data as string));
+                fc.setFont(new PainterFont(newFileObjs[0].data as string, newFileObjs[0].file.name));
                 props.setOpen(false);
             }}
             onClose={() => props.setOpen(false)}

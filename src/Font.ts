@@ -46,6 +46,7 @@ function uint8ArrayToBase64(bytes: Uint8Array) {
 declare let window: any;
 
 export class PainterFont {
+  filename: string;
   base64: string;
   fontFace: string;
   fontBlob: Uint8Array;
@@ -57,8 +58,9 @@ export class PainterFont {
   paints: Map<number, Paint[]>;
   glyphInfoCache: GlyphInfo[];
 
-  constructor(base64: string, faceIdx: number = 0) {
+  constructor(base64: string, filename: string, faceIdx: number = 0) {
     let [_header, body] = base64.split(",", 2);
+    this.filename = filename;
     this.fontBlob = base64ToUint8Array(body);
     this.svgCache = new Map();
     this.variations = {};
@@ -217,7 +219,7 @@ export class PainterFont {
     let datauri = `data:application/octet-stream;base64,${uint8ArrayToBase64(output)}`;
     var element = document.createElement('a');
     element.setAttribute('href', datauri);
-    element.setAttribute('download', "font.ttf");
+    element.setAttribute('download', this.filename.replace(/\.([ot]tf)$/, "-COLR.$1"));
     element.style.display = 'none';
     document.body.appendChild(element);
     element.click();
