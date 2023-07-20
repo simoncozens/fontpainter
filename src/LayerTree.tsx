@@ -11,7 +11,7 @@ import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LockIcon from '@mui/icons-material/Lock';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Accordion, AccordionDetails, AccordionSummary, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, InputAdornment, SelectChangeEvent, Tooltip } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Input, InputAdornment, SelectChangeEvent, Slider, Tooltip } from '@mui/material';
 import { Paint, SolidFill, SolidBlackFill, BlendMode, SELF_GID } from './Paints';
 import { GlyphInfo } from './Font';
 import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
@@ -73,6 +73,9 @@ const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
         },
     },
 }));
+const TopTreeItemRoot = styled(StyledTreeItemRoot)(({ theme }) => ({
+    "borderBottom": "1px solid " + theme.palette.divider,
+}));
 
 
 type FillItemProps = TreeItemProps & {
@@ -88,6 +91,8 @@ function FillItem(props: FillItemProps) {
         setAnchorEl(event.currentTarget);
     };
     const colorBoxOpen = Boolean(anchorEl);
+    let opacity_pc = (props.paint.fill as SolidFill).current_opacity * 100;
+    const [opacity, setOpacity] = React.useState<number>(opacity_pc);
     const [paintColor, setPaintColor] = React.useState(createColor((props.paint.fill as SolidFill).color));
     // XXX Too slow
     // let [_, basepalette] = props.paint._font.saveColr();
@@ -101,6 +106,20 @@ function FillItem(props: FillItemProps) {
         setPaintColor(newValue);
         props.redrawPaints();
     }
+    const handleOpacitySliderChange = (event: Event, newValue: number | number[]) => {
+        setOpacity(newValue as number);
+        (props.paint.fill as SolidFill).opacity.addValue(fc.font!.normalizedLocation, opacity / 100);
+        props.redrawPaints();
+    };
+    
+    const handleOpacityInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        let newOpacity = Number(event.target.value);
+        setOpacity(newOpacity);
+        console.log("Opacity", opacity);
+        (props.paint.fill as SolidFill).opacity.addValue(fc.font!.normalizedLocation, opacity / 100);
+        props.redrawPaints();
+    };
+
     return <StyledTreeItemRoot nodeId={props.nodeId}
         label={
             <Box
@@ -137,21 +156,24 @@ function FillItem(props: FillItemProps) {
                         Opacity:
                     </Typography>
                 </Box>
-                <TextField
-                    type="number"
+                <Slider
+                    value={typeof opacity === 'number' ? opacity : 0}
+                    onChange={handleOpacitySliderChange}
+                    aria-labelledby="input-slider"
                     size="small"
-                    variant="standard"
-                    InputProps={{
-                        inputProps: { min: 0, max: 100 }, endAdornment:
-                            <InputAdornment position="end">%</InputAdornment>,
-                    }}
-                    value={(props.paint.fill as SolidFill).current_opacity * 100}
-                    onChange={(evt) => {
-                        (props.paint.fill as SolidFill).opacity.addValue(fc.font!.normalizedLocation, parseInt(evt.target.value) / 100.0);
-                        props.redrawPaints();
+                    sx={{ maxWidth: 100, marginRight: 1 }}
+                />
+                <Input
+                    value={opacity}
+                    size="small"
+                    onChange={handleOpacityInputChange}
+                    inputProps={{
+                    min: 0,
+                    max: 100,
+                    type: 'number',
                     }}
                 />
-                <Box sx={{ paddingRight: 2 }}>
+                <Box>
                     <IconButton onClick={() => fc.selectVariableThing((props.paint.fill as SolidFill).opacity)}>
                         <Tooltip title="Edit variable">
                             <MultipleStop />
@@ -195,7 +217,7 @@ function TransformItem(props: TransformItemProps) {
                         {props.paint.matrix.label_value(props.paint.current_matrix)}
                     </Typography>
                 </Box>
-                <Box sx={{ paddingRight: 2 }}>
+                <Box>
                     <IconButton onClick={handleClick}>
                         <Tooltip title="Edit variable">
                             <MultipleStop />
@@ -235,7 +257,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
     }
 
     return (
-        <StyledTreeItemRoot
+        <TopTreeItemRoot
             nodeId={nodeId}
             key={nodeId}
             label={
@@ -300,7 +322,7 @@ function StyledTreeItem(props: StyledTreeItemProps) {
         >
             <FillItem nodeId={nodeId.toString() + ".fill"} paint={props.paint} redrawPaints={props.redrawPaints} />
             <TransformItem nodeId={nodeId.toString() + ".transform"} paint={props.paint} redrawPaints={props.redrawPaints} />
-        </StyledTreeItemRoot>
+        </TopTreeItemRoot>
     );
 }
 
@@ -467,7 +489,7 @@ export default function LayerTree() {
                             </Tooltip>
                         </IconButton>
                     </Box>
-                    <Box>
+                    <Box sx={{"flex": 1}}>
                         <IconButton disabled={!fc.font} onClick={
                             () => {
                                 fc.paintLayers!.splice(0, 0, new Paint(
