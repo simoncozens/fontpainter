@@ -1,8 +1,6 @@
 import * as SVG from "@svgdotjs/svg.js";
 import '@svgdotjs/svg.draggable.js'
 
-import { add_table } from "fontwriter";
-
 import { Font, create } from "fontkit";
 import { Paint, SELF_GID, SolidBlackFill } from "./Paints";
 import { COLR } from "./fontkit-bits/tables/COLR";
@@ -51,6 +49,7 @@ export class PainterFont {
   fontFace: string;
   fontBlob: Uint8Array;
   hbFont: any;
+  hbFace: any;
   fkFont: Font;
   axes: Record<string, Axis>;
   variations: Record<string, number>;
@@ -68,9 +67,9 @@ export class PainterFont {
     this.fontFace = `@font-face{font-family:"${name}"; src:url(${this.base64});}`;
     const { hbjs } = window;
     const blob = hbjs.createBlob(this.fontBlob.buffer);
-    const face = hbjs.createFace(blob, faceIdx);
-    this.hbFont = hbjs.createFont(face);
-    this.axes = face.getAxisInfos();
+    this.hbFace = hbjs.createFace(blob, faceIdx);
+    this.hbFont = hbjs.createFont(this.hbFace);
+    this.axes = this.hbFace.getAxisInfos();
     for (let axis of Object.keys(this.axes)) {
       this.axes[axis].tag = axis;
       this.variations[axis] = this.axes[axis].default;
@@ -214,8 +213,22 @@ export class PainterFont {
     let cpal = palette.toOpenType();
     let colr_blob = COLR.toBuffer(colr)
     let cpal_blob = CPAL.toBuffer(cpal)
-    let output = add_table(this.fontBlob, "COLR", colr_blob)
-    output = add_table(output, "CPAL", cpal_blob)
+    const { hbjs } = window;
+    let newface = hbjs.buildFace();
+    //@ts-ignore
+    for (var table_tag in this.fkFont.directory.tables) {
+      if (table_tag == "COLR" || table_tag == "CPAL") {
+        continue;
+      }
+      let table = this.hbFace.reference_table(table_tag);
+      console.log(table_tag, table);
+      newface.addTable(table_tag, table)
+    }
+
+    newface.addTable("COLR", colr_blob);
+    newface.addTable("CPAL", cpal_blob);
+    let output = newface.save();
+
     let datauri = `data:application/octet-stream;base64,${uint8ArrayToBase64(output)}`;
     var element = document.createElement('a');
     element.setAttribute('href', datauri);
