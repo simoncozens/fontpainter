@@ -35,7 +35,9 @@ function FontDrop(props: FontDropProps) {
     return (
         <DropzoneDialogBase
             dialogTitle={dialogTitle()}
-            acceptedFiles={['font/*']}
+            acceptedFiles={
+                ['font/*', "*.ttf", "*.otf", "*.woff", "*.woff2"]
+            }
             fileObjects={[]}
             filesLimit={1}
             cancelButtonText={"cancel"}
