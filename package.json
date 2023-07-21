@@ -16,7 +16,6 @@
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "fontkit": "github:simoncozens/fontkit#COLRv1",
-    "fontwriter": "file:fontwriter/pkg",
     "material-ui-popup-state": "^1.7.1",
     "mui-color": "^2.0.0-beta.2",
     "mui-file-dropzone": "^4.0.2",
@@ -33,7 +32,6 @@
     "wasm-pack": "^0.12.1"
   },
   "scripts": {
-    "prebuild": "cd fontwriter; wasm-pack build --target web; cd ..",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
