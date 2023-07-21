@@ -2,7 +2,7 @@ import * as SVG from "@svgdotjs/svg.js";
 import '@svgdotjs/svg.draggable.js'
 
 import { Font, create } from "fontkit";
-import { Paint, SELF_GID, SolidBlackFill } from "./Paints";
+import { Paint, Palette, SELF_GID, SolidBlackFill, SolidFill } from "./Paints";
 import { COLR } from "./fontkit-bits/tables/COLR";
 import CPAL from "./fontkit-bits/tables/CPAL";
 
@@ -55,6 +55,7 @@ export class PainterFont {
   variations: Record<string, number>;
   svgCache: Map<number, any>;
   paints: Map<number, Paint[]>;
+  palette: Palette;
   glyphInfoCache: GlyphInfo[];
 
   constructor(base64: string, filename: string, faceIdx: number = 0) {
@@ -62,6 +63,7 @@ export class PainterFont {
     this.filename = filename;
     this.fontBlob = base64ToUint8Array(body);
     this.svgCache = new Map();
+    this.palette = new Palette();
     this.variations = {};
     this.base64 = base64;
     this.fontFace = `@font-face{font-family:"${name}"; src:url(${this.base64});}`;
@@ -180,6 +182,7 @@ export class PainterFont {
         this.paints.set(gid, [basicPaint])
       // }
     }
+    this.updatePalette();
     return this.paints.get(gid) as Paint[];
   }
 
@@ -237,5 +240,16 @@ export class PainterFont {
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
+  }
+
+  updatePalette() {
+    this.palette = new Palette()
+    for (var paint of Array.from(this.paints.values())) {
+      for (var p of paint) {
+        if (p.fill instanceof SolidFill) {
+          this.palette.indexOf(p.fill.color);
+        }
+      }
+    }
   }
 }

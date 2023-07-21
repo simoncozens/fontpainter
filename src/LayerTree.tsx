@@ -97,13 +97,14 @@ function FillItem(props: FillItemProps) {
     // XXX Too slow
     // let [_, basepalette] = props.paint._font.saveColr();
     let palette: Record<string, string> = {};
-    // for (var colorString of basepalette.colors||[]) {
-    //     palette[colorString] = colorString;
-    // }
+    for (var colorString of fc.font!.palette.colors||[]) {
+        palette[colorString] = colorString;
+    }
 
     const handleChange = (newValue: Color) => {
         (props.paint.fill as SolidFill).color = "#" + newValue.hex;
         setPaintColor(newValue);
+        fc.font!.updatePalette();
         props.redrawPaints();
     }
     const handleOpacitySliderChange = (event: Event, newValue: number | number[]) => {
@@ -342,6 +343,7 @@ function ConfirmPasteAllDialog(props: ConfirmDialogProps) {
             fc.font!.paints.set(gid, clonedFromClipboard)
             gid += 1;
         }
+        fc.font!.updatePalette();
         fc.selectLayer(null);
         onClose();
     };
@@ -523,6 +525,7 @@ export default function LayerTree() {
                                 let clonedFromClipboard = fc.clipboard!.map(p => p.clone())
                                 fc.font!.paints.set(fc.selectedGid!, clonedFromClipboard)
                                 fc.setPaintLayers(clonedFromClipboard)
+                                fc.font!.updatePalette();
                                 fc.selectLayer(null);
                             }}
                         >
