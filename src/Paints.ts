@@ -8,6 +8,7 @@ import './svg.resize.js'
 import { VariableMatrix } from "./VariableMatrix";
 import { VariableScalar, f2dot14 } from "./VariableScalar";
 import { Compiler } from "./compiler";
+import {GradientObject } from 'react-best-gradient-color-picker'
 
 export let SELF_GID = -1
 
@@ -371,6 +372,33 @@ export class Paint {
 
     public get current_matrix(): Matrix {
         return this.matrix.valueAt(this._font.normalizedLocation)
+    }
+
+    setFill(newcolor: GradientObject) {
+        if (!newcolor.isGradient) {
+            if (this.fill instanceof SolidFill) {
+                this.fill.color = newcolor.colors[0].value
+            } else {
+                this.fill = new SolidFill(newcolor.colors[0].value, 1.0, this._font);
+            }
+            console.log("New fill is ", this.fill)
+            return;
+        }
+        
+        // If we were a gradient before, just update the stops
+        if (this.fill instanceof LinearGradientFill) {
+            this.fill.stops = newcolor.colors.map((c) => new GradientStop(c.value, c.left!, 1.0))
+        } else {
+            let bbox = this.rendering.bbox().transform(this.current_matrix.inverse());
+            this.fill = new LinearGradientFill(newcolor.colors.map((c) => new GradientStop(c.value, c.left!, 1.0)),
+            bbox.x, // x0
+            bbox.y, // y0,
+            bbox.x2, // x1,
+            bbox.y2, // y1, 
+            bbox.x, // x2, ???
+            bbox.y2) // y2 ???
+        }
+        console.log("New fill is ", this.fill)
     }
 
     render(selectedGid: number, header: SVG.Svg | null = null) {

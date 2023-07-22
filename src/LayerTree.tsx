@@ -15,6 +15,7 @@ import { Accordion, AccordionDetails, AccordionSummary, Button, Dialog, DialogAc
 import { Paint, SolidFill, SolidBlackFill, BlendMode, SELF_GID } from './Paints';
 import { GlyphInfo } from './Font';
 import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
+import ColorPicker, { useColorPicker } from 'react-best-gradient-color-picker'
 import { Autocomplete, ButtonBase, IconButton, Paper, Popover, TextField, Select, FormControl, MenuItem } from '@mui/material';
 import { Matrix } from '@svgdotjs/svg.js';
 import { createFilterOptions } from '@mui/material/Autocomplete';
@@ -93,19 +94,23 @@ function FillItem(props: FillItemProps) {
     const colorBoxOpen = Boolean(anchorEl);
     let opacity_pc = (props.paint.fill as SolidFill).current_opacity * 100;
     const [opacity, setOpacity] = React.useState<number>(opacity_pc);
-    const [paintColor, setPaintColor] = React.useState(createColor((props.paint.fill as SolidFill).color));
-    // XXX Too slow
-    // let [_, basepalette] = props.paint._font.saveColr();
+    const [paintColor, setPaintColor] = React.useState((props.paint.fill as SolidFill).color);
+
+    const { getGradientObject } = useColorPicker(paintColor, setPaintColor);
+
     let palette: Record<string, string> = {};
     for (var colorString of fc.font!.palette.colors||[]) {
         palette[colorString] = colorString;
     }
 
-    const handleChange = (newValue: Color) => {
-        (props.paint.fill as SolidFill).color = "#" + newValue.hex;
-        setPaintColor(newValue);
+    React.useEffect( () => {
+        props.paint.setFill(getGradientObject());
         fc.font!.updatePalette();
         props.redrawPaints();
+    }, [paintColor])
+
+    const handleChange = (newValue: string) => {
+        setPaintColor(newValue)
     }
     const handleOpacitySliderChange = (event: Event, newValue: number | number[]) => {
         setOpacity(newValue as number);
@@ -145,10 +150,9 @@ function FillItem(props: FillItemProps) {
                         anchorEl={anchorEl}
                         onClose={() => setAnchorEl(null)}
                     >
-                        <ColorBox
-                            defaultValue={paintColor}
+                        <ColorPicker
+                            value={paintColor}
                             onChange={handleChange}
-                            palette={palette}
                         />
                     </Popover>
                 </Box>

@@ -21,6 +21,7 @@
     "mui-file-dropzone": "^4.0.2",
     "prop-types": "^15.7.2",
     "react": "^17.0.1",
+    "react-best-gradient-color-picker": "github:simoncozens/react-gradient-color-picker#typings",
     "react-dom": "^17.0.1",
     "react-highlight": "^0.15.0",
     "react-scripts": "latest",
