@@ -139,16 +139,19 @@ export class Paint {
 
         // If we were a gradient before, just update the stops
         if (this.fill instanceof LinearGradientFill) {
-            this.fill.stops = newcolor.colors.map((c) => new GradientStop(c.value, c.left!, 1.0))
+            this.fill.stops = newcolor.colors.map((c) => new GradientStop(c.value, c.left!, 1.0, this.fill as LinearGradientFill))
         } else {
             let bbox = this.rendering.bbox().transform(this.current_matrix.inverse());
-            this.fill = new LinearGradientFill(newcolor.colors.map((c) => new GradientStop(c.value, c.left!, 1.0)),
-                bbox.x - 5, // x0
-                bbox.y - 5, // y0,
-                bbox.x2 + 5, // x1,
-                bbox.y2 + 5, // y1, 
-                bbox.x - 5, // x2, ???
-                bbox.y2 + 5) // y2 ???
+            let newfill = new LinearGradientFill([],
+                bbox.x - 5,  // x0
+                bbox.y - 5,  // y0,
+                bbox.x2 + 5,  // x1,
+                bbox.y2 + 5,  // y1, 
+                bbox.x - 5,   // x2, ???
+                bbox.y2 + 5,  // y2 ???
+                this._font)
+            newfill.stops = newcolor.colors.map((c) => new GradientStop(c.value, c.left!, 1.0, newfill))
+            this.fill = newfill;
         }
         console.log("New fill is ", this.fill)
     }

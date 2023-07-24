@@ -61,14 +61,20 @@ export let SolidBlackFill = (font: PainterFont) => new SolidFill("#000000", 1, f
 export class GradientStop {
     color: string;
     offset: number;
-    opacity: number;
+    opacity: VariableScalar;
+    _parent: LinearGradientFill;
 
-    constructor(color: string, offset: number, opacity: number) {
+    constructor(color: string, offset: number, opacity: number, parent: LinearGradientFill) {
         this.color = color;
         this.offset = offset;
-        this.opacity = opacity;
+        this._parent = parent;
+        let font = parent._font;
+        this.opacity = new VariableScalar(Object.keys(font.axes));
+        this.opacity.addValue(font.defaultLocation, opacity);
     }
-
+    get current_opacity(): number {
+        return this.opacity.valueAt(this._parent._font.normalizedLocation);
+    }
     toOpenType(palette: Palette): any {
         return {
             stopOffset: this.offset,
@@ -78,12 +84,15 @@ export class GradientStop {
     }
 
     clone(): GradientStop {
-        return new GradientStop(this.color, this.offset, this.opacity);
+        let cloned = new GradientStop(this.color, this.offset, this.current_opacity, this._parent);
+        cloned.opacity = this.opacity.clone() as VariableScalar;
+        return cloned;
     }
 }
 
 export class LinearGradientFill {
     _element: SVG.Gradient | null = null;
+    _font: PainterFont;
     stops: GradientStop[];
     x0: number;
     y0: number;
@@ -92,7 +101,8 @@ export class LinearGradientFill {
     x2: number;
     y2: number;
 
-    constructor(stops: GradientStop[], x0: number, y0: number, x1: number, y1: number, x2: number, y2: number) {
+    constructor(stops: GradientStop[], x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, font: PainterFont) {
+        this._font = font;
         this.stops = stops;
         this.x0 = x0;
         this.y0 = y0;
@@ -217,7 +227,8 @@ export class LinearGradientFill {
             this.x1,
             this.y1,
             this.x2,
-            this.y2
+            this.y2,
+            this._font
         );
     }
 

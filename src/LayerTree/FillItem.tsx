@@ -29,7 +29,8 @@ export function FillItem(props: FillItemProps) {
     const colorBoxOpen = Boolean(anchorEl);
     let opacity_pc = (props.paint.fill as SolidFill).current_opacity * 100;
     const [opacity, setOpacity] = React.useState<number>(opacity_pc);
-    const [paintColor, setPaintColor] = React.useState((props.paint.fill as SolidFill).color);
+    let startColor = Object.values(props.paint.fill.toCSS())[0];
+    const [paintColor, setPaintColor] = React.useState(startColor);
 
     const { getGradientObject } = useColorPicker(paintColor, setPaintColor);
 
@@ -47,6 +48,8 @@ export function FillItem(props: FillItemProps) {
     const handleChange = (newValue: string) => {
         setPaintColor(newValue);
     };
+
+    // The opacity slider is only shown for solid fills
     const handleOpacitySliderChange = (event: Event, newValue: number | number[]) => {
         setOpacity(newValue as number);
         (props.paint.fill as SolidFill).opacity.addValue(fc.font!.normalizedLocation, opacity / 100);
@@ -60,6 +63,88 @@ export function FillItem(props: FillItemProps) {
         (props.paint.fill as SolidFill).opacity.addValue(fc.font!.normalizedLocation, opacity / 100);
         props.redrawPaints();
     };
+
+    let solidFillOpacity: React.ReactElement[] = [];
+    let gradientFillOpacity: React.ReactElement[] = [];
+    if (props.paint.fill instanceof SolidFill) {
+        solidFillOpacity.push(
+            <Box sx={{ paddingRight: 2 }}>
+                <Typography variant="caption" sx={{ fontWeight: 'inherit' }}>
+                    Opacity:
+                </Typography>
+            </Box>,
+            <Slider
+                value={typeof opacity === 'number' ? opacity : 0}
+                onChange={handleOpacitySliderChange}
+                aria-labelledby="input-slider"
+                size="small"
+                disabled={!(props.paint.fill instanceof SolidFill)}
+                sx={{ maxWidth: 100, marginRight: 1 }} />,
+            <Input
+                value={opacity}
+                size="small"
+                onChange={handleOpacityInputChange}
+                disabled={!(props.paint.fill instanceof SolidFill)}
+                inputProps={{
+                    min: 0,
+                    max: 100,
+                    type: 'number',
+                }} />,
+            <Box>
+                <IconButton onClick={() => fc.selectVariableThing((props.paint.fill as SolidFill).opacity)}>
+                    <Tooltip title="Edit variable">
+                        <MultipleStop />
+                    </Tooltip>
+                </IconButton>
+            </Box>
+        );
+    } else {
+        for (var stopIndex in props.paint.fill.stops) {
+            var stop = props.paint.fill.stops[stopIndex];
+            var currentOpacity = stop.opacity.valueAt(fc.font!.normalizedLocation);
+            gradientFillOpacity.push(
+                <StyledTreeItemRoot nodeId={props.nodeId + ".stop" + stopIndex + ".opacity"}
+                    label={<Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            pr: 0,
+                        }}
+                    >
+                        <Box sx={{ paddingRight: 2 }}>
+                            <Typography variant="caption" sx={{ fontWeight: 'inherit' }}>
+                                Stop {stopIndex} opacity:
+                            </Typography>
+                        </Box>
+                        <Slider
+                            value={typeof currentOpacity === 'number' ? currentOpacity * 100 : 0}
+                            onChange={handleOpacitySliderChange}
+                            aria-labelledby="input-slider"
+                            size="small"
+                            sx={{ marginRight: 1, flex: 1 }} />
+                        <Input
+                            value={currentOpacity * 100}
+                            size="small"
+                            onChange={handleOpacityInputChange}
+                            inputProps={{
+                                min: 0,
+                                max: 100,
+                                type: 'number',
+                            }} />
+                        <Box>
+                            <IconButton onClick={() => fc.selectVariableThing(stop.opacity)}>
+                                <Tooltip title="Edit variable">
+                                    <MultipleStop />
+                                </Tooltip>
+                            </IconButton>
+                        </Box>
+                    </Box>}></StyledTreeItemRoot>
+            );
+        }
+    }
+
+    // Variable opacity for gradient fills
+
 
     return <StyledTreeItemRoot nodeId={props.nodeId}
         label={<Box
@@ -92,33 +177,9 @@ export function FillItem(props: FillItemProps) {
                         onChange={handleChange} />
                 </Popover>
             </Box>
-            <Box sx={{ paddingRight: 2 }}>
-                <Typography variant="caption" sx={{ fontWeight: 'inherit' }}>
-                    Opacity:
-                </Typography>
-            </Box>
-            <Slider
-                value={typeof opacity === 'number' ? opacity : 0}
-                onChange={handleOpacitySliderChange}
-                aria-labelledby="input-slider"
-                size="small"
-                sx={{ maxWidth: 100, marginRight: 1 }} />
-            <Input
-                value={opacity}
-                size="small"
-                onChange={handleOpacityInputChange}
-                inputProps={{
-                    min: 0,
-                    max: 100,
-                    type: 'number',
-                }} />
-            <Box>
-                <IconButton onClick={() => fc.selectVariableThing((props.paint.fill as SolidFill).opacity)}>
-                    <Tooltip title="Edit variable">
-                        <MultipleStop />
-                    </Tooltip>
-                </IconButton>
-            </Box>
+            {solidFillOpacity}
+        </Box>}>
+        {gradientFillOpacity}
 
-        </Box>} />;
+    </StyledTreeItemRoot>;
 }
