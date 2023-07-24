@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/fontpainter/static/css/main.32e5786a.css",
-    "main.js": "/fontpainter/static/js/main.3100d6d1.js",
+    "main.js": "/fontpainter/static/js/main.24d3313a.js",
     "static/js/920.504cf601.chunk.js": "/fontpainter/static/js/920.504cf601.chunk.js",
     "index.html": "/fontpainter/index.html",
     "main.32e5786a.css.map": "/fontpainter/static/css/main.32e5786a.css.map",
-    "main.3100d6d1.js.map": "/fontpainter/static/js/main.3100d6d1.js.map",
+    "main.24d3313a.js.map": "/fontpainter/static/js/main.24d3313a.js.map",
     "920.504cf601.chunk.js.map": "/fontpainter/static/js/920.504cf601.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.32e5786a.css",
-    "static/js/main.3100d6d1.js"
+    "static/js/main.24d3313a.js"
   ]
 }
