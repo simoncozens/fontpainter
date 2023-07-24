@@ -174,6 +174,19 @@ export class LinearGradientFill {
                 balls.circle(15).attr({
                     cx: this.x0 + (this.x1 - this.x0) * stop.offset / 100,
                     cy: this.y0 + (this.y1 - this.y0) * stop.offset / 100,
+                    fill: stop.color,
+                    stroke: "white",
+                    "stroke-width": 0.5
+                });
+            }
+        };
+        let updateBalls = () => {
+            for (let i = 0; i < balls.children().length; i++) {
+                let ball = balls.children()[i];
+                let stop = this.stops[i + 1];
+                ball.attr({
+                    cx: this.x0 + (this.x1 - this.x0) * stop.offset / 100,
+                    cy: this.y0 + (this.y1 - this.y0) * stop.offset / 100,
                     fill: stop.color
                 });
             }
@@ -191,10 +204,11 @@ export class LinearGradientFill {
         start.on("dragmove", (e: any) => {
             this.x0 = e.detail.box.x;
             this.y0 = e.detail.box.y;
-            line.plot(this.x0, this.y0, this.x1, this.y1);
+            updateBalls();
             if (this._element) {
                 this._element.from(this.x0, this.y0);
             }
+            line.plot(start.cx(), start.cy(), end.cx(), end.cy());
         });
         end.on("dragend", (e: any) => {
             this.x1 = e.detail.box.x;
@@ -204,10 +218,11 @@ export class LinearGradientFill {
         end.on("dragmove", (e: any) => {
             this.x1 = e.detail.box.x;
             this.y1 = e.detail.box.y;
-            line.plot(this.x0, this.y0, this.x1, this.y1);
+            updateBalls();
             if (this._element) {
                 this._element.to(this.x1, this.y1);
             }
+            line.plot(start.cx(), start.cy(), end.cx(), end.cy());
 
         });
     }
