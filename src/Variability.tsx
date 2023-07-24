@@ -1,8 +1,9 @@
-import { Paper, Typography } from '@mui/material';
-import { Box } from '@mui/system';
-import { VariableScalar, VariableThing } from "./VariableScalar";
-import { DataGrid, GridRowsProp, GridColDef, GridValueFormatterParams } from '@mui/x-data-grid';
-import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
+import Typography from '@mui/material/Typography';
+import { VariableScalar } from "./VariableScalar";
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import * as React from 'react';
 import { VariableMatrix } from './VariableMatrix';

@@ -1,8 +1,16 @@
 import * as React from 'react';
-import { Modal, Box, Typography, Accordion, AccordionDetails, AccordionSummary, Button, Stack } from '@mui/material';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Modal from '@mui/material/Modal';
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { styled } from '@mui/material/styles';
-import Highlight from 'react-highlight'
+const Highlight = React.lazy(() => import('react-highlight'));
+
 import "./Developer.css";
 import { FontContext, FontContextType } from "./App";
 
@@ -85,7 +93,9 @@ export function Developer() {
                     onClose={() => setOpen(false)}
                 >
                     <Box sx={style}>
-                        <Highlight className="language-json">{content}</Highlight>
+                        <React.Suspense fallback={<div>Loading...</div>}>
+                            <Highlight className="language-json">{content}</Highlight>
+                        </React.Suspense>
                     </Box>
                 </Modal>
             </AccordionDetails>

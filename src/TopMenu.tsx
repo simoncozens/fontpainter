@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography';
 import { DropzoneDialogBase } from "mui-file-dropzone";
 import { PainterFont } from "./Font";
 import { FontContext, FontContextType } from "./App";
-import { Chip } from '@mui/material';
+import Chip from '@mui/material/Chip';
 
 interface FontDropProps {
     open: boolean,
