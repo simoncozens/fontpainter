@@ -170,6 +170,8 @@ export class SolidFill {
         return `SolidFill(${this.color}, ${this.current_opacity})`
     }
 
+    toCSS(): React.CSSProperties { return { "backgroundColor": this.color } }
+
     clone(): SolidFill {
         let cloned = new SolidFill(this.color, this.current_opacity, this._font);
         cloned.opacity = this.opacity.clone() as VariableScalar
@@ -246,7 +248,7 @@ export class LinearGradientFill {
     toSVG(doc: SVG.Svg) {
         let grad = doc.gradient("linear", (add) => {
             for (let stop of this.stops) {
-                add.stop(stop.offset, stop.color)
+                add.stop(stop.offset / 100, stop.color)
             }
         })
         grad.from(this.x0, this.y0)
@@ -255,6 +257,15 @@ export class LinearGradientFill {
         this._element = grad;
         return grad
     }
+    toCSS(): React.CSSProperties {
+        let angle = 90 - Math.atan2(this.y1 - this.y0, this.x1 - this.x0) * 180 / Math.PI;
+        let grad = `linear-gradient(${angle}deg`;
+        for (let stop of this.stops) {
+            grad += `, ${stop.color} ${stop.offset}%`
+        }
+        grad += ")"
+        return { "backgroundImage": grad }
+    }
 
     onSelected(rendering: SVG.G) {
         let wireframe = rendering.group().id("wireframe-gradient")
@@ -262,20 +273,21 @@ export class LinearGradientFill {
         for (var stop of this.stops) {
             colorline[stop.offset] = stop.color
         }
+        console.log(colorline);
         let start = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.x0, "cy": this.y0, "fill": colorline[0] || "black" })
-        let end = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.x1, "cy": this.y1, "fill": colorline[1] || "black" })
+        let end = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.x1, "cy": this.y1, "fill": colorline[100] || "black" })
         let control = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.x2, "cy": this.y2, "fill": "black" })
         let line = wireframe.line(start.cx(), start.cy(), end.cx(), end.cy()).attr({ "stroke": "black", "stroke-width": 0.5 }).id("wireframe-line")
         let balls = wireframe.group()
         let makeballs = () => {
             deleteAllChildren(balls)
             for (let stop of this.stops) {
-                if (stop.offset == 0 || stop.offset == 1) {
+                if (stop.offset == 0 || stop.offset == 100) {
                     continue
                 }
                 balls.circle(15).attr({
-                    cx: this.x0 + (this.x1 - this.x0) * stop.offset,
-                    cy: this.y0 + (this.y1 - this.y0) * stop.offset,
+                    cx: this.x0 + (this.x1 - this.x0) * stop.offset / 100,
+                    cy: this.y0 + (this.y1 - this.y0) * stop.offset / 100,
                     fill: stop.color
                 })
             }
@@ -391,12 +403,12 @@ export class Paint {
         } else {
             let bbox = this.rendering.bbox().transform(this.current_matrix.inverse());
             this.fill = new LinearGradientFill(newcolor.colors.map((c) => new GradientStop(c.value, c.left!, 1.0)),
-            bbox.x, // x0
-            bbox.y, // y0,
-            bbox.x2, // x1,
-            bbox.y2, // y1, 
-            bbox.x, // x2, ???
-            bbox.y2) // y2 ???
+                bbox.x - 5, // x0
+                bbox.y - 5, // y0,
+                bbox.x2 + 5, // x1,
+                bbox.y2 + 5, // y1, 
+                bbox.x - 5, // x2, ???
+                bbox.y2 + 5) // y2 ???
         }
         console.log("New fill is ", this.fill)
     }

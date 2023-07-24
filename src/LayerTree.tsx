@@ -164,8 +164,11 @@ function FillItem(props: FillItemProps) {
                     </Typography>
                 </Box>
                 <Box sx={{ paddingRight: 2, flex: 1 }}>
-                    <ButtonBase onClick={handleClick}>
-                        <ColorButton color={createColor((props.paint.fill as SolidFill).color)} />
+                    <ButtonBase onClick={handleClick}
+                        sx={{
+                            width: 24, height: 24,
+                            ...props.paint.fill.toCSS()
+                        }}>
                     </ButtonBase>
                     <Popover
                         open={colorBoxOpen}
@@ -308,7 +311,12 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                         </IconButton>
                     </Box>
                     <Box sx={{ paddingRight: 2 }}>
-                        <ColorButton color={createColor((props.paint.fill as SolidFill).color)} />
+                        <Box
+                            sx={{
+                                width: 24, height: 24,
+                                ...props.paint.fill.toCSS()
+                            }}>
+                        </Box>
                     </Box>
                     {renaming && fc.font ?
                         <Autocomplete
