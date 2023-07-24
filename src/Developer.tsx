@@ -43,7 +43,7 @@ export function Developer() {
 
     let dumpLayer = () => {
         setContent(JSON.stringify(fc.paintLayers![fc.selectedLayer!], (key, value) => {
-            if (key === "rendering" || key === "_font" || key === "matrix" || key === "_element") {
+            if (key === "rendering" || key.startsWith("_") || key === "matrix") {
                 return "[omitted]"
             } else {
                 return value
