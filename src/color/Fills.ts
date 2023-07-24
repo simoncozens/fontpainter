@@ -79,7 +79,7 @@ export class GradientStop {
     toOpenType(compiler: Compiler): ColorStop {
         const paletteIndex = compiler.palette!.indexOf(this.color);
         return {
-            stopOffset: this.offset,
+            stopOffset: this.offset / 100,
             paletteIndex,
             alpha: this.current_opacity // TODO: support variable opacity
         };
@@ -133,20 +133,33 @@ export class LinearGradientFill {
     get description(): string {
         return `GradientFill`;
     }
+
+    endPoints(): [number, number] {
+        let d1x = this.x1 - this.x0;
+        let d1y = this.y1 - this.y0;
+        let d2x = this.x2 - this.x0;
+        let d2y = this.y2 - this.y0;
+        let dotProd = d1x * d2x + d1y * d2y;
+        let rotLenSq = d2x * d2x + d2y * d2y;
+        let magnitude = dotProd / rotLenSq;
+        return [this.x1 - magnitude * d2x, this.y1 - magnitude * d2y];
+    }
     toSVG(doc: SVG.Svg) {
         let grad = doc.gradient("linear", (add) => {
             for (let stop of this.stops) {
                 add.stop(stop.offset / 100, stop.color);
             }
         });
+        let [x2, y2] = this.endPoints();
         grad.from(this.x0, this.y0);
-        grad.to(this.x1, this.y1);
+        grad.to(x2, y2);
         grad.attr({ gradientUnits: "userSpaceOnUse" });
         this._element = grad;
         return grad;
     }
     toCSS(): React.CSSProperties {
-        let angle = 90 - Math.atan2(this.y1 - this.y0, this.x1 - this.x0) * 180 / Math.PI;
+        let [x2, y2] = this.endPoints();
+        let angle = 90 - Math.atan2(y2 - this.y0, x2) * 180 / Math.PI;
         let grad = `linear-gradient(${angle}deg`;
         for (let stop of this.stops) {
             grad += `, ${stop.color} ${stop.offset}%`;
@@ -203,6 +216,12 @@ export class LinearGradientFill {
         start.on("dragend", (e: any) => {
             rendering.fire("refreshtree");
         });
+        end.on("dragend", (e: any) => {
+            rendering.fire("refreshtree");
+        });
+        control.on("dragend", (e: any) => {
+            rendering.fire("refreshtree");
+        });
         start.on("dragmove", (e: any) => {
             this.x0 = e.detail.box.x;
             this.y0 = e.detail.box.y;
@@ -212,17 +231,21 @@ export class LinearGradientFill {
             }
             line.plot(start.cx(), start.cy(), end.cx(), end.cy());
         });
-        end.on("dragend", (e: any) => {
-            this.x1 = e.detail.box.x;
-            this.y1 = e.detail.box.y;
-            rendering.fire("refreshtree");
+        control.on("dragmove", (e: any) => {
+            this.x2 = e.detail.box.x;
+            this.y2 = e.detail.box.y;
+            updateBalls();
+            if (this._element) {
+                this._element.to(...this.endPoints());
+            }
+            line.plot(start.cx(), start.cy(), end.cx(), end.cy());
         });
         end.on("dragmove", (e: any) => {
             this.x1 = e.detail.box.x;
             this.y1 = e.detail.box.y;
             updateBalls();
             if (this._element) {
-                this._element.to(this.x1, this.y1);
+                this._element.to(...this.endPoints());
             }
             line.plot(start.cx(), start.cy(), end.cx(), end.cy());
 
