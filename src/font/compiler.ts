@@ -5,6 +5,8 @@ import { Palette } from "../color/Palette";
 import { SolidFill } from "../color/Fills";
 import { VarStore, VarStoreBuilder } from "./varstorebuilder";
 import { MatrixType, VariableMatrix, matrixType } from "./VariableMatrix";
+import { PaintGlyph } from "../color/COLR";
+import { Paint as COLRPaint } from "../color/COLR";
 
 interface DeltaSetIndexMapEntry {
     entry: number;
@@ -175,12 +177,12 @@ export class Compiler {
             console.log("Paint has no gid", paint);
             return;
         }
-        let fillpaint = (paint.fill as SolidFill).toOpenType(this);
+        let fillpaint = paint.fill.toOpenType(this);
         let glyphpaint = {
             version: 10,
             glyphID: paint.gid == SELF_GID ? contextGid : paint.gid,
             paint: fillpaint,
-        };
+        } as PaintGlyph;
 
         let matrix = paint.matrix;
         if (!matrix.doesVary) {
@@ -192,7 +194,7 @@ export class Compiler {
         return this.compileVariableMatrix(matrix, glyphpaint);
     }
 
-    compileStaticMatrix(matrix: Matrix, glyphpaint: any) {
+    compileStaticMatrix(matrix: Matrix, glyphpaint: any): COLRPaint {
         let style = matrixType(matrix);
         if (style == MatrixType.None) {
             return glyphpaint;
@@ -219,7 +221,7 @@ export class Compiler {
         }
     }
 
-    compileVariableMatrix(matrix: VariableMatrix, glyphpaint: any) {
+    compileVariableMatrix(matrix: VariableMatrix, glyphpaint: any): COLRPaint {
         let highestType = matrix.mostComplexType();
         if (highestType == MatrixType.None) {
             return glyphpaint;

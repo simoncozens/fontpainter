@@ -4,6 +4,7 @@ import { VariableScalar, f2dot14 } from "../font/VariableScalar";
 import { Compiler } from "../font/compiler";
 import { deleteAllChildren } from "./Paints";
 import { Palette } from "./Palette";
+import { ColorStop, PaintLinearGradient, PaintSolid, PaintVarSolid, VarColorStop } from './COLR';
 
 
 export class SolidFill {
@@ -18,7 +19,7 @@ export class SolidFill {
         this.opacity.addValue(font.defaultLocation, opacity);
     }
 
-    toOpenType(compiler: Compiler): any {
+    toOpenType(compiler: Compiler): PaintSolid | PaintVarSolid {
         const paletteIndex = compiler.palette!.indexOf(this.color);
         if (this.opacity.doesVary) {
             let varIndexBase = compiler.deltaset.length;
@@ -30,14 +31,14 @@ export class SolidFill {
                 paletteIndex: paletteIndex,
                 alpha: this.opacity.valueAt(this._font.defaultLocation),
                 varIndexBase
-            };
+            } as PaintVarSolid;
 
         }
         return {
             version: 2,
             paletteIndex,
             alpha: this.current_opacity
-        };
+        } as PaintSolid;
     }
     get current_opacity(): number {
         return this.opacity.valueAt(this._font.normalizedLocation);
@@ -75,11 +76,12 @@ export class GradientStop {
     get current_opacity(): number {
         return this.opacity.valueAt(this._parent._font.normalizedLocation);
     }
-    toOpenType(palette: Palette): any {
+    toOpenType(compiler: Compiler): ColorStop {
+        const paletteIndex = compiler.palette!.indexOf(this.color);
         return {
             stopOffset: this.offset,
-            paletteIndex: palette.indexOf(this.color),
-            alpha: this.opacity
+            paletteIndex,
+            alpha: this.current_opacity // TODO: support variable opacity
         };
     }
 
@@ -111,11 +113,11 @@ export class LinearGradientFill {
         this.x2 = x2;
         this.y2 = y2;
     }
-    toOpenType(palette: Palette): any {
+    toOpenType(compiler: Compiler): PaintLinearGradient {
         let colorline = {
             extend: 0,
             numStops: this.stops.length,
-            colorStops: this.stops.map((stop) => stop.toOpenType(palette))
+            colorStops: this.stops.map((stop) => stop.toOpenType(compiler))
         };
         return {
             version: 4,
