@@ -2,9 +2,11 @@ import * as SVG from "@svgdotjs/svg.js";
 import '@svgdotjs/svg.draggable.js'
 
 import { Font, create } from "fontkit";
-import { Paint, Palette, SELF_GID, SolidBlackFill, SolidFill } from "./Paints";
-import { COLR } from "./fontkit-bits/tables/COLR";
-import CPAL from "./fontkit-bits/tables/CPAL";
+import { Paint, SELF_GID } from "../color/Paints";
+import { Palette } from "../color/Palette";
+import { SolidBlackFill, SolidFill } from "../color/Fills";
+import { COLR } from "../fontkit-bits/tables/COLR";
+import CPAL from "../fontkit-bits/tables/CPAL";
 
 import { NormalizedLocation, normalizeLocation, normalizeValue, UnnormalizedLocation } from "./varmodel";
 import { Compiler } from "./compiler";
@@ -179,7 +181,7 @@ export class PainterFont {
 
       // } else {
       let basicPaint = new Paint(SELF_GID, SolidBlackFill(this), new SVG.Matrix(), this, gid);
-        this.paints.set(gid, [basicPaint])
+      this.paints.set(gid, [basicPaint])
       // }
     }
     this.updatePalette();

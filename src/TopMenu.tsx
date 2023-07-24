@@ -8,7 +8,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { DropzoneDialogBase } from "mui-file-dropzone";
-import { PainterFont } from "./Font";
+import { PainterFont } from "./font/Font";
 import { FontContext, FontContextType } from "./App";
 import Chip from '@mui/material/Chip';
 

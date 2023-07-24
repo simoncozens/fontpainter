@@ -1,4 +1,4 @@
-import { Axis } from './Font';
+import { Axis } from './font/Font';
 import * as React from 'react';
 import Typography from '@mui/material/Typography';
 import Slider from '@mui/material/Slider';

@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { PainterFont } from './Font';
-import { Paint } from './Paints';
+import { PainterFont } from './font/Font';
+import { Paint } from './color/Paints';
 import * as SVG from "@svgdotjs/svg.js";
 import useMediaQuery from '@mui/material/useMediaQuery';
 import '@svgdotjs/svg.panzoom.js'

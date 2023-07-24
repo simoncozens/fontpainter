@@ -25,6 +25,7 @@
     "react-dom": "^17.0.1",
     "react-highlight": "^0.15.0",
     "react-scripts": "latest",
+    "tinycolor2": "^1.6.0",
     "typescript": "latest"
   },
   "devDependencies": {

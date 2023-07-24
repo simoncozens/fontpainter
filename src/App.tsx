@@ -4,8 +4,8 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Grid from '@mui/material/Grid';
-import { PainterFont } from './Font';
-import { Paint } from './Paints';
+import { PainterFont } from './font/Font';
+import { Paint } from './color/Paints';
 import { GlyphGrid } from './GlyphGrid';
 import { Developer } from "./Developer";
 import TopMenu from './TopMenu';
@@ -15,7 +15,7 @@ import { Axes } from './Axes';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import CssBaseline from '@mui/material/CssBaseline';
-import { VariableThing } from './VariableScalar';
+import { VariableThing } from './font/VariableScalar';
 import { Variability } from './Variability';
 
 export type FontContextType = {

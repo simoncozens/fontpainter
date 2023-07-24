@@ -32,8 +32,9 @@ import Popover from '@mui/material/Popover';
 import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
-import { Paint, SolidFill, SolidBlackFill, BlendMode, SELF_GID } from './Paints';
-import { GlyphInfo } from './Font';
+import { Paint, BlendMode, SELF_GID } from './color/Paints';
+import { SolidFill, SolidBlackFill } from "./color/Fills";
+import { GlyphInfo } from './font/Font';
 import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
 import ColorPicker, { useColorPicker } from 'react-best-gradient-color-picker'
 import { Matrix } from '@svgdotjs/svg.js';

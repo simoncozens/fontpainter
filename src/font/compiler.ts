@@ -1,6 +1,8 @@
 import { Matrix } from "@svgdotjs/svg.js";
 import { PainterFont } from "./Font";
-import { BlendMode, Paint, Palette, SELF_GID, SolidFill } from "./Paints";
+import { BlendMode, Paint, SELF_GID } from "../color/Paints";
+import { Palette } from "../color/Palette";
+import { SolidFill } from "../color/Fills";
 import { VarStore, VarStoreBuilder } from "./varstorebuilder";
 import { MatrixType, VariableMatrix, matrixType } from "./VariableMatrix";
 
