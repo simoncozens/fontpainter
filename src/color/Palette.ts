@@ -6,7 +6,7 @@ function toRGBA(color: string) {
         red: rgba.r,
         green: rgba.g,
         blue: rgba.b,
-        alpha: rgba.a
+        alpha: rgba.a * 255
     };
 }
 
