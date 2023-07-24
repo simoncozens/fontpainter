@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/fontpainter/static/css/main.32e5786a.css",
-    "main.js": "/fontpainter/static/js/main.f238af54.js",
+    "main.js": "/fontpainter/static/js/main.f2cae9d8.js",
     "index.html": "/fontpainter/index.html",
     "main.32e5786a.css.map": "/fontpainter/static/css/main.32e5786a.css.map",
-    "main.f238af54.js.map": "/fontpainter/static/js/main.f238af54.js.map"
+    "main.f2cae9d8.js.map": "/fontpainter/static/js/main.f2cae9d8.js.map"
   },
   "entrypoints": [
     "static/css/main.32e5786a.css",
-    "static/js/main.f238af54.js"
+    "static/js/main.f2cae9d8.js"
   ]
 }
