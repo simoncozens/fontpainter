@@ -28,7 +28,7 @@
     "typescript": "latest"
   },
   "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "latest",
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@types/react-highlight": "^0.12.5",
     "wasm-pack": "^0.12.1"
   },
