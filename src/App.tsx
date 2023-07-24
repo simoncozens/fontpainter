@@ -9,7 +9,7 @@ import { Paint } from './color/Paints';
 import { GlyphGrid } from './GlyphGrid';
 import { Developer } from "./Developer";
 import TopMenu from './TopMenu';
-import LayerTree from './LayerTree';
+import LayerTree from './LayerTree/LayerTree';
 import EditScreen from './EditScreen';
 import { Axes } from './Axes';
 import { ThemeProvider, createTheme } from '@mui/material/styles';

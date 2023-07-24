@@ -2,7 +2,7 @@ import * as React from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Icon from '@mui/material/Icon';
-import KeylessTreeView from './mui-bits/TreeView';
+import KeylessTreeView from '../mui-bits/TreeView';
 import TreeItem, { TreeItemProps, treeItemClasses } from '@mui/lab/TreeItem';
 import Typography from '@mui/material/Typography';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -20,30 +20,26 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import Input from '@mui/material/Input';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import Slider from '@mui/material/Slider';
 import Tooltip from '@mui/material/Tooltip';
 import Autocomplete from '@mui/material/Autocomplete';
-import ButtonBase from '@mui/material/ButtonBase';
 import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
-import Popover from '@mui/material/Popover';
 import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
-import { Paint, BlendMode, SELF_GID } from './color/Paints';
-import { SolidFill, SolidBlackFill } from "./color/Fills";
-import { GlyphInfo } from './font/Font';
+import { Paint, BlendMode, SELF_GID } from '../color/Paints';
+import { SolidBlackFill } from "../color/Fills";
+import { GlyphInfo } from '../font/Font';
 import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
-import ColorPicker, { useColorPicker } from 'react-best-gradient-color-picker'
 import { Matrix } from '@svgdotjs/svg.js';
 import { createFilterOptions } from '@mui/material/Autocomplete';
 import ContentCopy from '@mui/icons-material/ContentCopy';
 import ContentPaste from '@mui/icons-material/ContentPaste';
 import ContentPasteGoTwoTone from '@mui/icons-material/ContentPasteGoTwoTone';
-import MultipleStop from '@mui/icons-material/MultipleStop';
-import { FontContext, FontContextType } from "./App";
+import { FontContext, FontContextType } from "../App";
+import { FillItem } from './FillItem';
+import { TransformItem } from './TransformItem';
 
 const filterOptions = createFilterOptions({
     matchFrom: 'start',
@@ -67,7 +63,7 @@ type StyledTreeItemProps = TreeItemProps & {
     redrawPaints: () => void;
 };
 
-const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
+export const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
     color: theme.palette.text.secondary,
     [`& .${treeItemClasses.content}`]: {
         color: theme.palette.text.secondary,
@@ -100,164 +96,6 @@ const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
 const TopTreeItemRoot = styled(StyledTreeItemRoot)(({ theme }) => ({
     "borderBottom": "1px solid " + theme.palette.divider,
 }));
-
-
-type FillItemProps = TreeItemProps & {
-    nodeId: String,
-    paint: Paint;
-    redrawPaints: () => void;
-};
-
-function FillItem(props: FillItemProps) {
-    const fc: FontContextType = React.useContext(FontContext);
-    const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
-    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-        setAnchorEl(event.currentTarget);
-    };
-    const colorBoxOpen = Boolean(anchorEl);
-    let opacity_pc = (props.paint.fill as SolidFill).current_opacity * 100;
-    const [opacity, setOpacity] = React.useState<number>(opacity_pc);
-    const [paintColor, setPaintColor] = React.useState((props.paint.fill as SolidFill).color);
-
-    const { getGradientObject } = useColorPicker(paintColor, setPaintColor);
-
-    let palette: Record<string, string> = {};
-    for (var colorString of fc.font!.palette.colors||[]) {
-        palette[colorString] = colorString;
-    }
-
-    React.useEffect( () => {
-        props.paint.setFill(getGradientObject());
-        fc.font!.updatePalette();
-        props.redrawPaints();
-    }, [paintColor])
-
-    const handleChange = (newValue: string) => {
-        setPaintColor(newValue)
-    }
-    const handleOpacitySliderChange = (event: Event, newValue: number | number[]) => {
-        setOpacity(newValue as number);
-        (props.paint.fill as SolidFill).opacity.addValue(fc.font!.normalizedLocation, opacity / 100);
-        props.redrawPaints();
-    };
-    
-    const handleOpacityInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        let newOpacity = Number(event.target.value);
-        setOpacity(newOpacity);
-        console.log("Opacity", opacity);
-        (props.paint.fill as SolidFill).opacity.addValue(fc.font!.normalizedLocation, opacity / 100);
-        props.redrawPaints();
-    };
-
-    return <StyledTreeItemRoot nodeId={props.nodeId}
-        label={
-            <Box
-                sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    pr: 0,
-                }}
-            >
-                <Box sx={{ paddingRight: 2 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 'inherit' }}>
-                        {props.paint.fill instanceof SolidFill ? "Solid " : "Gradient "}
-                        Fill
-                    </Typography>
-                </Box>
-                <Box sx={{ paddingRight: 2, flex: 1 }}>
-                    <ButtonBase onClick={handleClick}
-                        sx={{
-                            width: 24, height: 24,
-                            ...props.paint.fill.toCSS()
-                        }}>
-                    </ButtonBase>
-                    <Popover
-                        open={colorBoxOpen}
-                        anchorEl={anchorEl}
-                        onClose={() => setAnchorEl(null)}
-                    >
-                        <ColorPicker
-                            value={paintColor}
-                            onChange={handleChange}
-                        />
-                    </Popover>
-                </Box>
-                <Box sx={{ paddingRight: 2 }}>
-                    <Typography variant="caption" sx={{ fontWeight: 'inherit' }}>
-                        Opacity:
-                    </Typography>
-                </Box>
-                <Slider
-                    value={typeof opacity === 'number' ? opacity : 0}
-                    onChange={handleOpacitySliderChange}
-                    aria-labelledby="input-slider"
-                    size="small"
-                    sx={{ maxWidth: 100, marginRight: 1 }}
-                />
-                <Input
-                    value={opacity}
-                    size="small"
-                    onChange={handleOpacityInputChange}
-                    inputProps={{
-                    min: 0,
-                    max: 100,
-                    type: 'number',
-                    }}
-                />
-                <Box>
-                    <IconButton onClick={() => fc.selectVariableThing((props.paint.fill as SolidFill).opacity)}>
-                        <Tooltip title="Edit variable">
-                            <MultipleStop />
-                        </Tooltip>
-                    </IconButton>
-                </Box>
-
-            </Box>
-        } />
-}
-
-type TransformItemProps = TreeItemProps & {
-    nodeId: String,
-    paint: Paint;
-    redrawPaints: () => void;
-};
-
-function TransformItem(props: TransformItemProps) {
-    const fc: FontContextType = React.useContext(FontContext);
-    let matrix = props.paint.current_matrix
-    let handleClick = () => {
-        fc.selectVariableThing(props.paint.matrix)
-    }
-
-    return <StyledTreeItemRoot nodeId={props.nodeId}
-        label={
-            <Box
-                sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    pr: 0,
-                }}
-            >
-                <Box sx={{ paddingRight: 2, flex: 1 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 'inherit' }}>
-                        Transformation
-                    </Typography>
-                </Box>
-                <Box sx={{ paddingRight: 2 }}>
-                    <Typography variant="caption" sx={{ fontWeight: 'inherit' }}>
-                        {props.paint.matrix.label_value(props.paint.current_matrix)}
-                    </Typography>
-                </Box>
-                <Box>
-                    <IconButton onClick={handleClick}>
-                        <Tooltip title="Edit variable">
-                            <MultipleStop />
-                        </Tooltip>
-                    </IconButton>
-                </Box>
-            </Box>
-        } />
-}
 
 
 function StyledTreeItem(props: StyledTreeItemProps) {
@@ -526,7 +364,7 @@ export default function LayerTree() {
                             </Tooltip>
                         </IconButton>
                     </Box>
-                    <Box sx={{"flex": 1}}>
+                    <Box sx={{ "flex": 1 }}>
                         <IconButton disabled={!fc.font} onClick={
                             () => {
                                 fc.paintLayers!.splice(0, 0, new Paint(
