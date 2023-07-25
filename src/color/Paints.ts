@@ -208,7 +208,6 @@ export class Paint {
         if (this._rendering.find("#wireframe").length) {
             return
         }
-        console.log(this.matrix)
         // @ts-ignore
         let fullbbox = this._rendering.bbox()
         for (var child of this._rendering.children()) {

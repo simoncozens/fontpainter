@@ -298,7 +298,6 @@ export class LinearGradientFill {
         for (var stop of this.stops) {
             colorline[stop.offset] = stop.color;
         }
-        console.log(colorline);
         let start = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0, "fill": colorline[0] || "black" });
         let end = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x1, "cy": this.current_y1, "fill": colorline[100] || "black" });
         let control = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x2, "cy": this.current_y2, "fill": "black" });

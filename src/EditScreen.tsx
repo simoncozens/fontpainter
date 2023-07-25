@@ -14,18 +14,22 @@ function deleteAllChildren(e: any) {
     }
 }
 
+const normalizeEvent = (ev:any) =>
+  ev.touches || [{ clientX: ev.clientX, clientY: ev.clientY }];
+
 export default function EditScreen() {
     const fc: FontContextType = React.useContext(FontContext);
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-    const [zoomValue, setZoomValue] = React.useState<any>(null)
     const backgroundColor = React.useMemo(
       () => prefersDarkMode ? '#AAA' : 'white',
       [prefersDarkMode],
     );
-    
+    let svgEl: SVG.Svg | null = null;
+    console.log("Rerender");
+
     const svg = React.useRef(document.createElement("div"));
     if (fc.font && fc.paintLayers.length > 0 && fc.selectedGid != null) {
-        let svgEl = fc.font.renderPaints(fc.paintLayers, fc.selectedGid);
+        svgEl = fc.font.renderPaints(fc.paintLayers, fc.selectedGid);
         if (fc.selectedLayer != null) {
             fc.paintLayers[fc.selectedLayer].onSelected();
         }
@@ -48,12 +52,19 @@ export default function EditScreen() {
             zoomMin: 0.5,
             zoomMax: 50
         });
-        if (zoomValue) {
-            svgEl.zoom(zoomValue.level, zoomValue.focus);
+        if (fc.viewbox!.current! != null) {
+            svgEl.viewbox(fc.viewbox!.current!);
         }
         svgEl.on("zoom", (evt: any) => {
-            setZoomValue(evt.detail)
+            svgEl!.zoom(evt.detail.level, evt.detail.focus);
+            let vb = svgEl!.viewbox();
+            fc.viewbox!.current! = svgEl!.viewbox()
         })
+        var dx = 0; var dy = 0;
+        svgEl.on("panEnd", (evt: any) => {
+            fc.viewbox!.current! = svgEl!.viewbox()
+            evt.preventDefault();
+        });
         svgEl.addTo(svg.current);
     }
     return (

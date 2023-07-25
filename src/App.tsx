@@ -17,6 +17,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import CssBaseline from '@mui/material/CssBaseline';
 import { VariableThing } from './font/VariableScalar';
 import { Variability } from './Variability';
+import * as SVG from "@svgdotjs/svg.js";
 
 export type FontContextType = {
   font: PainterFont | null;
@@ -31,6 +32,7 @@ export type FontContextType = {
   selectLayer: React.Dispatch<React.SetStateAction<number | null>>;
   selectedVariableThing: VariableThing<any> | null,
   selectVariableThing: React.Dispatch<React.SetStateAction<VariableThing<any> | null>>;
+  viewbox: React.MutableRefObject<SVG.Box | null> | null,
 };
 
 export const FontContext = createContext<FontContextType>({
@@ -45,7 +47,8 @@ export const FontContext = createContext<FontContextType>({
   selectedLayer: null,
   selectLayer: (f) => { },
   selectedVariableThing: null,
-  selectVariableThing: (f) => { }
+  selectVariableThing: (f) => { },
+  viewbox: null
 });
 
 
@@ -84,13 +87,14 @@ export default function App() {
     }
   }
 
+  let viewbox = React.useRef(null);
 
   return (
     <ThemeProvider theme={theme}>
       {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
       <CssBaseline />
 
-      <FontContext.Provider value={{ font, setFont, selectedGid, selectGid: doSelectGid, paintLayers, setPaintLayers: wrappedSetPaintLayers, clipboard, setClipboard, selectedLayer, selectLayer, selectVariableThing, selectedVariableThing }}>
+      <FontContext.Provider value={{ font, setFont, selectedGid, selectGid: doSelectGid, paintLayers, setPaintLayers: wrappedSetPaintLayers, clipboard, setClipboard, selectedLayer, selectLayer, selectVariableThing, selectedVariableThing, viewbox }}>
         <Box sx={{ flexGrow: 1 }}>
           <TopMenu />
 
@@ -104,7 +108,7 @@ export default function App() {
               <Developer />
             </Grid>
             <Grid item xs={8}>
-              <EditScreen />
+              <EditScreen/>
             </Grid>
           </Grid>
         </Box>
