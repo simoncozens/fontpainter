@@ -92,6 +92,7 @@ export class Paint {
     fill: SolidFill | LinearGradientFill;
     matrix: VariableMatrix;
     locked: boolean = false;
+    visible: boolean = true;
     _rendering!: SVG.G
     _font: PainterFont
     blendMode: BlendMode = BlendMode.Normal
@@ -121,6 +122,8 @@ export class Paint {
         }
         let matrix =new SVG.Matrix();
         let self = new Paint(obj.gid, fill, matrix, f, obj.gid);
+        self.locked = obj.locked;
+        self.visible = obj.visible;
         self.matrix = VariableMatrix.inflate(obj.matrix, f);
         return self;
     }
@@ -173,7 +176,7 @@ export class Paint {
         // console.log("Re-rendering")
         // console.log(this)
         this._rendering = new SVG.G();
-        if (this.gid == null) {
+        if (this.gid == null || !this.visible) {
             return;
         }
         let gid = this.gid;

@@ -28,7 +28,8 @@ export function GlyphGrid() {
         rows = fc.font.glyphInfos() as unknown as GridRowsProp[];
     }
     return (
-        <Accordion sx={{ width: '100%' }} disabled={!fc.font}>
+        <Accordion sx={{ width: '100%' }} disabled={!fc.font}
+            defaultExpanded={fc.font != null}> 
             <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
             >

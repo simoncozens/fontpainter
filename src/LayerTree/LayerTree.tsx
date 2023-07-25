@@ -40,6 +40,7 @@ import ContentPasteGoTwoTone from '@mui/icons-material/ContentPasteGoTwoTone';
 import { FontContext, FontContextType } from "../App";
 import { FillItem } from './FillItem';
 import { TransformItem } from './TransformItem';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 const filterOptions = createFilterOptions({
     matchFrom: 'start',
@@ -125,6 +126,11 @@ function StyledTreeItem(props: StyledTreeItemProps) {
         redrawPaints();
     }
 
+    let toggleVisible = () => {
+        props.paint.visible = !props.paint.visible;
+        redrawPaints();
+    }
+
     return (
         <TopTreeItemRoot
             nodeId={nodeId}
@@ -137,19 +143,26 @@ function StyledTreeItem(props: StyledTreeItemProps) {
                         pr: 0,
                     }}
                 >
-                    <Box sx={{ paddingRight: 2 }}>
+                    <Box sx={{ paddingRight: 1 }}>
                         <Typography sx={{ fontWeight: 'inherit' }}>
                             {label}
                         </Typography>
                     </Box>
-                    <Box sx={{ paddingRight: 2 }}>
+                    <Box>
                         <IconButton onClick={toggleLocked}>
                             <Tooltip title="Locked">
                                 {props.paint.locked ? <LockIcon /> : <Icon />}
                             </Tooltip>
                         </IconButton>
                     </Box>
-                    <Box sx={{ paddingRight: 2 }}>
+                    <Box sx={{paddingRight: 1}}>
+                        <IconButton onClick={toggleVisible}>
+                            <Tooltip title="Visible">
+                                {props.paint.visible ? <VisibilityIcon /> : <Icon />}
+                            </Tooltip>
+                        </IconButton>
+                    </Box>
+                    <Box sx={{ paddingRight: 1 }}>
                         <Box
                             sx={{
                                 width: 24, height: 24,

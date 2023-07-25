@@ -79,7 +79,8 @@ export class Compiler {
         var baseGlyphPaintRecords: any[] = [];
         var layers: any[] = [];
         this.font.paints.forEach((paints: Paint[], gid: number) => {
-            let topPaint = this.compilePaints(paints, gid, layers);
+            let visiblepaints = paints.filter((p) => p.visible);
+            let topPaint = this.compilePaints(visiblepaints, gid, layers);
             baseGlyphPaintRecords.push({
                 gid,
                 paint: topPaint,
