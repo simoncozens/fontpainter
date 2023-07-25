@@ -115,7 +115,7 @@ let MapDataEntry = new r.Struct({
 });
 
 MapDataEntry.encode = function (stream, val, parent) {
-  let fmt = (parent.val.entryFormat & 0x0030)
+  let fmt = parent.val.entryFormat
   let innerBits = 1 + (fmt & 0x000F);
   let innerMask = (1 << innerBits) - 1;
   let outerShift = 16 - innerBits;
