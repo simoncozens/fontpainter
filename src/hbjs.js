@@ -404,10 +404,13 @@ function hbjs(instance) {
         // Repack
         const input = exports.hb_subset_input_create_or_fail();
         exports.hb_subset_input_keep_everything(input);
+        const no_subset_set = exports.hb_subset_input_no_subset_set(input);
+        exports.hb_set_add(no_subset_set, hb_tag('Pntr'));
         const subset = exports.hb_subset_or_fail(ptr, input);
         exports.hb_subset_input_destroy(input);
         // Save
         var blob = exports.hb_face_reference_blob(subset);
+        // var blob = exports.hb_face_reference_blob(ptr);
         const offset = exports.hb_blob_get_data(blob, 0);
         var length = exports.hb_blob_get_length(blob);
         if (!length) { return; }

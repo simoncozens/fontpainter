@@ -1,6 +1,5 @@
 import * as SVG from "@svgdotjs/svg.js";
 import '@svgdotjs/svg.draggable.js'
-
 import { Font, create } from "fontkit";
 import { Paint, SELF_GID } from "../color/Paints";
 import { Palette } from "../color/Palette";
@@ -60,7 +59,7 @@ export class PainterFont {
   palette: Palette;
   glyphInfoCache: GlyphInfo[];
 
-  constructor(base64: string, filename: string, faceIdx: number = 0) {
+  constructor(base64: string, filename: string, snackOpener: () => void, faceIdx: number = 0) {
     let [_header, body] = base64.split(",", 2);
     this.filename = filename;
     this.fontBlob = base64ToUint8Array(body);
@@ -81,7 +80,7 @@ export class PainterFont {
     this.fkFont = create(this.fontBlob as Buffer);
     this.glyphInfoCache = [];
     this.paints = new Map();
-    this.saveColr()
+    this.try_inflate(snackOpener);
     window["font"] = this
     return this;
   }
@@ -194,7 +193,7 @@ export class PainterFont {
     // Do them reversed (bottom to top)
     for (var i = paints.length - 1; i >= 0; i--) {
       paints[i].render(selectedGid, svg)
-      paints[i].rendering.addTo(topgroup)
+      paints[i]._rendering.addTo(topgroup)
     }
     let matrix = new SVG.Matrix(1, 0, 0, -1, 0, 1000);
     topgroup.transform(matrix);
@@ -222,16 +221,23 @@ export class PainterFont {
     let newface = hbjs.buildFace();
     //@ts-ignore
     for (var table_tag in this.fkFont.directory.tables) {
-      if (table_tag == "COLR" || table_tag == "CPAL") {
+      if (table_tag == "COLR" || table_tag == "CPAL" || table_tag == "Pntr") {
         continue;
       }
       let table = this.hbFace.reference_table(table_tag);
-      console.log(table_tag, table);
       newface.addTable(table_tag, table)
     }
 
     newface.addTable("COLR", colr_blob);
     newface.addTable("CPAL", cpal_blob);
+    const { bzip2 } = window;
+    let uncompressed = this.deflate();
+    let compressed = bzip2.compress((new TextEncoder()).encode(uncompressed));
+    let lengthblock = (new TextEncoder()).encode(uncompressed.length.toString());
+    let data = new Uint8Array(lengthblock.length + compressed.length);
+    data.set(lengthblock, 0);
+    data.set(compressed, lengthblock.length);
+    newface.addTable("Pntr", data);
     let output = newface.save();
 
     let datauri = `data:application/octet-stream;base64,${uint8ArrayToBase64(output)}`;
@@ -252,6 +258,36 @@ export class PainterFont {
           this.palette.indexOf(p.fill.color);
         }
       }
+    }
+  }
+
+  deflate(): string {
+    return JSON.stringify(Object.fromEntries(this.paints), (key, value) => {
+      if (key.startsWith("_")) { return null }
+      if (value && typeof value.deflate === "function") { return value.deflate() }
+      return value
+    })
+  }
+
+  try_inflate(onFail: () => void) {
+    //@ts-ignore
+    if (!("Pntr" in this.fkFont.directory.tables)) {
+      return
+    }
+    //@ts-ignore
+    const { bzip2 } = window;
+    let compressed = this.hbFace.reference_table("Pntr");
+    let sig = compressed.findIndex((v: number) => v == 0x42);
+    let size = Number(new TextDecoder().decode(compressed.slice(0, sig)));
+    let data = bzip2.decompress(compressed.slice(sig), size+1);
+    data = new TextDecoder().decode(data);
+    try {
+      let obj: Record<number, string[]> = JSON.parse(data);
+      for (var [gid, paints] of Object.entries(obj)) {
+        this.paints.set(Number(gid), paints.map((p: any) => Paint.inflate(p, this)))
+      }
+    } catch (error) {
+      onFail();
     }
   }
 }

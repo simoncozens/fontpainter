@@ -43,7 +43,7 @@ export function Developer() {
 
     let dumpLayer = () => {
         setContent(JSON.stringify(fc.paintLayers![fc.selectedLayer!], (key, value) => {
-            if (key === "rendering" || key.startsWith("_") || key === "matrix") {
+            if (key.startsWith("_") || key === "matrix") {
                 return "[omitted]"
             } else {
                 return value
@@ -74,6 +74,12 @@ export function Developer() {
         setOpen(true);
     }
 
+    let dumpForSaving = () => {
+        let dump = fc.font!.deflate();
+        setContent(dump);
+        setOpen(true);
+    }
+
     return (
         <Accordion sx={{ width: '100%' }}>
             <AccordionSummary
@@ -86,6 +92,7 @@ export function Developer() {
                     <SimpleButton variant="outlined" disabled={fc.selectedLayer === null} onClick={dumpLayer}>Dump current paint layer</SimpleButton>
                     <SimpleButton variant="outlined" disabled={fc.selectedLayer === null} onClick={dumpMatrix}>Dump current variable matrix</SimpleButton>
                     <SimpleButton variant="outlined" onClick={dumpCompilation}>Compile font to OT</SimpleButton>
+                    <SimpleButton variant="outlined" onClick={dumpForSaving}>Compile font to Pntr project</SimpleButton>
 
                 </Stack>
                 <Modal

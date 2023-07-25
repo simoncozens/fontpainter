@@ -92,7 +92,7 @@ export class Paint {
     fill: SolidFill | LinearGradientFill;
     matrix: VariableMatrix;
     locked: boolean = false;
-    rendering!: SVG.G
+    _rendering!: SVG.G
     _font: PainterFont
     blendMode: BlendMode = BlendMode.Normal
     _keyhandler: ((e: KeyboardEvent) => void) | null = null
@@ -110,6 +110,19 @@ export class Paint {
         let newVersion = new Paint(this.gid, this.fill.clone(), new SVG.Matrix(), this._font, this.gid!)
         newVersion.matrix = this.matrix.clone() as VariableMatrix
         return newVersion
+    }
+
+    public static inflate(obj: any, f: PainterFont): Paint {
+        let fill: SolidFill | LinearGradientFill
+        if (obj.fill.type == "SolidFill") {
+            fill = SolidFill.inflate(obj.fill, f)
+        } else {
+            fill = LinearGradientFill.inflate(obj.fill, f)
+        }
+        let matrix =new SVG.Matrix();
+        let self = new Paint(obj.gid, fill, matrix, f, obj.gid);
+        self.matrix = VariableMatrix.inflate(obj.matrix, f);
+        return self;
     }
 
     public get label(): string {
@@ -139,9 +152,9 @@ export class Paint {
 
         // If we were a gradient before, just update the stops
         if (this.fill instanceof LinearGradientFill) {
-            this.fill.stops = newcolor.colors.map((c) => new GradientStop(c.value, c.left!, 1.0, this.fill as LinearGradientFill))
+            this.fill.stops = newcolor.colors.map((c) => new GradientStop(c.value, c.left!, 1.0, this._font))
         } else {
-            let bbox = this.rendering.bbox().transform(this.current_matrix.inverse());
+            let bbox = this._rendering.bbox().transform(this.current_matrix.inverse());
             let newfill = new LinearGradientFill([],
                 bbox.x - 5,  // x0
                 bbox.y - 5,  // y0,
@@ -150,7 +163,7 @@ export class Paint {
                 bbox.x - 5,   // x2, ???
                 bbox.y2 + 5,  // y2 ???
                 this._font)
-            newfill.stops = newcolor.colors.map((c) => new GradientStop(c.value, c.left!, 1.0, newfill))
+            newfill.stops = newcolor.colors.map((c) => new GradientStop(c.value, c.left!, 1.0, this._font))
             this.fill = newfill;
         }
         console.log("New fill is ", this.fill)
@@ -159,7 +172,7 @@ export class Paint {
     render(selectedGid: number, header: SVG.Svg | null = null) {
         // console.log("Re-rendering")
         // console.log(this)
-        this.rendering = new SVG.G();
+        this._rendering = new SVG.G();
         if (this.gid == null) {
             return;
         }
@@ -168,35 +181,35 @@ export class Paint {
             gid = selectedGid;
         }
         const svgDoc = SVG.SVG(this._font.getSVG(gid));
-        svgDoc.children().forEach((c) => this.rendering.add(c));
+        svgDoc.children().forEach((c) => this._rendering.add(c));
 
         if (this.fill instanceof SolidFill) {
-            this.rendering.attr({ "fill": this.fill.color });
-            this.rendering.attr({ "fill-opacity": (this.fill.current_opacity * 100).toString() + "%" });
+            this._rendering.attr({ "fill": this.fill.color });
+            this._rendering.attr({ "fill-opacity": (this.fill.current_opacity * 100).toString() + "%" });
         } else if (this.fill instanceof LinearGradientFill && header != null) {
             let gradient = this.fill.toSVG(header)
-            this.rendering.attr({ "fill": gradient })
+            this._rendering.attr({ "fill": gradient })
         }
-        this.rendering.transform(this.current_matrix);
-        applyBlendMode(this.blendMode, this.rendering)
+        this._rendering.transform(this.current_matrix);
+        applyBlendMode(this.blendMode, this._rendering)
         // Hack
-        if (this.rendering.find("#wireframe").length === 0 && this._keyhandler) {
+        if (this._rendering.find("#wireframe").length === 0 && this._keyhandler) {
             document.removeEventListener("keydown", this._keyhandler);
             this._keyhandler = null
         }
     }
 
     onSelected() {
-        if (this.rendering.find("#wireframe").length) {
+        if (this._rendering.find("#wireframe").length) {
             return
         }
         console.log(this.matrix)
         // @ts-ignore
-        let fullbbox = this.rendering.bbox()
-        for (var child of this.rendering.children()) {
+        let fullbbox = this._rendering.bbox()
+        for (var child of this._rendering.children()) {
             fullbbox = fullbbox.merge(child.bbox())
         }
-        let wireframe = this.rendering.group().id("wireframe")
+        let wireframe = this._rendering.group().id("wireframe")
         wireframe.css({ "cursor": "move" })
         let border = wireframe.rect(
             fullbbox.width as number + 10,
@@ -325,7 +338,7 @@ export class Paint {
             let testPoint = untransformed.transform(current)
             console.log(`Under the new matrix the point gets transformed to ${testPoint.x}, ${testPoint.y}`)
             console.log("Resize done")
-            this.rendering.fire("refreshtree")
+            this._rendering.fire("refreshtree")
         })
         if (this._keyhandler === null) {
             this._keyhandler = (e: KeyboardEvent) => {
@@ -340,14 +353,14 @@ export class Paint {
                 this.matrix.addValue(this._font.normalizedLocation, this.current_matrix.translate(dx, dy))
                 if (dx || dy) {
                     e.preventDefault()
-                    this.rendering.fire("refreshtree")
+                    this._rendering.fire("refreshtree")
                 }
             }
             document.addEventListener("keydown", this._keyhandler);
         }
 
         if (this.fill instanceof LinearGradientFill) {
-            this.fill.onSelected(this.rendering)
+            this.fill.onSelected(this._rendering)
         }
     }
 
@@ -356,13 +369,13 @@ export class Paint {
             document.removeEventListener("keydown", this._keyhandler);
             this._keyhandler = null
         }
-        let wf = this.rendering.find("#wireframe")
-        this.rendering.css({ "cursor": "pointer" })
+        let wf = this._rendering.find("#wireframe")
+        this._rendering.css({ "cursor": "pointer" })
         if (wf.length) {
             wf[0].remove()
         }
         if (this.fill instanceof LinearGradientFill) {
-            this.fill.onDeselected(this.rendering)
+            this.fill.onDeselected(this._rendering)
         }
     }
 }

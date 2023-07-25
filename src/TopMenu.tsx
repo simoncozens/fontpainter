@@ -11,10 +11,13 @@ import { DropzoneDialogBase } from "mui-file-dropzone";
 import { PainterFont } from "./font/Font";
 import { FontContext, FontContextType } from "./App";
 import Chip from '@mui/material/Chip';
+import Button from '@mui/material/Button';
+import Snackbar from '@mui/material/Snackbar';
 
 interface FontDropProps {
     open: boolean,
-    setOpen: React.Dispatch<React.SetStateAction<boolean>>
+    setOpen: React.Dispatch<React.SetStateAction<boolean>>,
+    snackOpener: () => void,
 };
 
 function FontDrop(props: FontDropProps) {
@@ -45,7 +48,7 @@ function FontDrop(props: FontDropProps) {
             maxFileSize={5000000}
             open={props.open}
             onAdd={newFileObjs => {
-                fc.setFont(new PainterFont(newFileObjs[0].data as string, newFileObjs[0].file.name));
+                fc.setFont(new PainterFont(newFileObjs[0].data as string, newFileObjs[0].file.name, props.snackOpener));
                 props.setOpen(false);
             }}
             onClose={() => props.setOpen(false)}
@@ -57,6 +60,28 @@ function FontDrop(props: FontDropProps) {
 
 export default function TopMenu() {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const [openSnack, setOpenSnack] = React.useState(false);
+    const handleSnackClose = (event: React.SyntheticEvent | Event, reason?: string) => {
+      if (reason === 'clickaway') { return; }
+      setOpenSnack(false);
+    };
+    let failureSnack = <Snackbar
+        open={openSnack}
+        autoHideDuration={5000}
+        onClose={handleSnackClose}
+        message="Opening font failed"
+        action={<React.Fragment>
+            <IconButton
+            size="small"
+            aria-label="close"
+            color="inherit"
+            onClick={handleSnackClose}
+            >
+            <CloseIcon fontSize="small" />
+            </IconButton>
+        </React.Fragment>
+        }
+    />;
     const fc: FontContextType = React.useContext(FontContext);
     const [dropDialogOpen, setDropDialogOpen] = React.useState(!fc.font);
     const open = Boolean(anchorEl);
@@ -103,11 +128,12 @@ export default function TopMenu() {
                         Save
                     </MenuItem>
                 </Menu>
-                <FontDrop open={dropDialogOpen} setOpen={setDropDialogOpen} />
+                <FontDrop open={dropDialogOpen} setOpen={setDropDialogOpen} snackOpener={ () => setOpenSnack(true)} />
                 <Typography variant="h6" component="div" sx={{ mr: 2}}>
                     FontPainter
                 </Typography>
                 <Chip label="alpha" color="error" />
+                {failureSnack}
             </Toolbar>
         </AppBar>
     )

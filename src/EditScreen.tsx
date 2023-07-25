@@ -30,10 +30,10 @@ export default function EditScreen() {
             fc.paintLayers[fc.selectedLayer].onSelected();
         }
         fc.paintLayers.forEach((layer: Paint, index: number) => {
-            layer.rendering.on("click", () => {
+            layer._rendering.on("click", () => {
                 fc.selectLayer(index);
             })
-            layer.rendering.on("refreshtree", () => {
+            layer._rendering.on("refreshtree", () => {
                 fc.setPaintLayers([...fc.paintLayers]);
             })
         })

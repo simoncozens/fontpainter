@@ -1,6 +1,6 @@
 import { Matrix } from "@svgdotjs/svg.js";
 import { NormalizedLocation, VariationModel } from "./varmodel";
-import { Axis } from "./Font";
+import { Axis, PainterFont } from "./Font";
 import { VarStoreBuilder } from "./varstorebuilder";
 import { MatrixType, matrixType } from "./VariableMatrix";
 
@@ -30,6 +30,17 @@ export abstract class VariableThing<T> {
         this.interpolation_cache = new Map();
         this._model = null;
         this.axes = axes;
+    }
+
+    deflate(): object {
+        let out = "";
+        for (let [k, v] of Array.from(this.values.entries())) {
+            out += `${k}=${v};`;
+        }
+        return {
+            axes: this.axes,
+            values: out,
+        }
     }
 
     locations(axis: Axis): number[] {
@@ -154,4 +165,16 @@ export class VariableScalar extends VariableThing<number> {
             scalars
         ) || 0;
     }
+    public static inflate(obj: any, _f: PainterFont): VariableScalar {
+        let out = new VariableScalar(obj.axes);
+        for (let part of obj.values.split(";")) {
+            if (part.length == 0) {
+                continue;
+            }
+            let [k, v] = part.split("=");
+            out.values.set(k, Number(v));
+        }
+        return out;
+    }
+
 }

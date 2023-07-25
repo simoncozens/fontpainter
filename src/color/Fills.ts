@@ -3,7 +3,6 @@ import * as SVG from "@svgdotjs/svg.js";
 import { VariableScalar, f2dot14 } from "../font/VariableScalar";
 import { Compiler } from "../font/compiler";
 import { deleteAllChildren } from "./Paints";
-import { Palette } from "./Palette";
 import { ColorStop, PaintLinearGradient, PaintSolid, PaintVarSolid, VarColorStop } from './COLR';
 
 
@@ -11,12 +10,20 @@ export class SolidFill {
     color: string;
     opacity: VariableScalar;
     _font: PainterFont;
+    type: string;
 
     constructor(color: string, opacity: number, font: PainterFont) {
         this.color = color;
         this._font = font;
+        this.type = "SolidFill";
         this.opacity = new VariableScalar(Object.keys(font.axes));
         this.opacity.addValue(font.defaultLocation, opacity);
+    }
+
+    public static inflate(s: any, f: PainterFont): SolidFill {
+        let fill = new SolidFill(s.color, 1.0, f);
+        fill.opacity = VariableScalar.inflate(s.opacity, f);
+        return fill;
     }
 
     toOpenType(compiler: Compiler): PaintSolid | PaintVarSolid {
@@ -63,18 +70,24 @@ export class GradientStop {
     color: string;
     offset: number;
     opacity: VariableScalar;
-    _parent: LinearGradientFill;
+    _font: PainterFont;
 
-    constructor(color: string, offset: number, opacity: number, parent: LinearGradientFill) {
+    constructor(color: string, offset: number, opacity: number, font: PainterFont) {
         this.color = color;
         this.offset = offset;
-        this._parent = parent;
-        let font = parent._font;
+        this._font = font;
         this.opacity = new VariableScalar(Object.keys(font.axes));
         this.opacity.addValue(font.defaultLocation, opacity);
     }
+
+    public static inflate(s: any, f: PainterFont): GradientStop {
+        let stop = new GradientStop(s.color, s.offset, 1.0, f);
+        stop.opacity = VariableScalar.inflate(s.opacity, f);
+        return stop;
+    }
+
     get current_opacity(): number {
-        return this.opacity.valueAt(this._parent._font.normalizedLocation);
+        return this.opacity.valueAt(this._font.normalizedLocation);
     }
     toOpenType(compiler: Compiler): ColorStop {
         const paletteIndex = compiler.palette!.indexOf(this.color);
@@ -86,7 +99,7 @@ export class GradientStop {
     }
 
     clone(): GradientStop {
-        let cloned = new GradientStop(this.color, this.offset, this.current_opacity, this._parent);
+        let cloned = new GradientStop(this.color, this.offset, this.current_opacity, this._font);
         cloned.opacity = this.opacity.clone() as VariableScalar;
         return cloned;
     }
@@ -96,6 +109,7 @@ export class LinearGradientFill {
     _element: SVG.Gradient | null = null;
     _font: PainterFont;
     stops: GradientStop[];
+    type: string;
     x0: number;
     y0: number;
     x1: number;
@@ -112,7 +126,14 @@ export class LinearGradientFill {
         this.y1 = y1;
         this.x2 = x2;
         this.y2 = y2;
+        this.type = "LinearGradientFill"
     }
+
+    public static inflate(s: any, f: PainterFont): LinearGradientFill {
+        let stops = s.stops.map((stop: any) => GradientStop.inflate(stop, f));
+        return new LinearGradientFill(stops, s.x0, s.y0, s.x1, s.y1, s.x2, s.y2, f);
+    }
+
     toOpenType(compiler: Compiler): PaintLinearGradient {
         let colorline = {
             extend: 0,

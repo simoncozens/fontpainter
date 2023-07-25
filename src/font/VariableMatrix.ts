@@ -2,6 +2,7 @@ import { Matrix } from "@svgdotjs/svg.js";
 import { VariableThing } from "./VariableScalar";
 import { NormalizedLocation, VariationModel } from "./varmodel";
 import { VarStoreBuilder } from "./varstorebuilder";
+import { PainterFont } from "./Font";
 
 export enum MatrixType {
     None,
@@ -88,5 +89,15 @@ export class VariableMatrix extends VariableThing<Matrix> {
         }
         return outtype;
     }
-
+    public static inflate(obj: any, _f: PainterFont): VariableMatrix {
+        let out = new VariableMatrix(obj.axes);
+        for (let part of obj.values.split(";")) {
+            if (part.length == 0) {
+                continue;
+            }
+            let [k, v] = part.split("=");
+            out.values.set(k, new Matrix(v.replace("matrix(","")));
+        }
+        return out;
+    }
 }
