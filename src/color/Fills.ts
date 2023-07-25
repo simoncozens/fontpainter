@@ -3,7 +3,7 @@ import * as SVG from "@svgdotjs/svg.js";
 import { VariableScalar, f2dot14 } from "../font/VariableScalar";
 import { Compiler } from "../font/compiler";
 import { deleteAllChildren } from "./Paints";
-import { ColorStop, PaintLinearGradient, PaintSolid, PaintVarSolid, VarColorStop } from './COLR';
+import { ColorStop, PaintLinearGradient, PaintVarLinearGradient, PaintSolid, PaintVarSolid, VarColorLine, VarColorStop } from './COLR';
 
 
 export class SolidFill {
@@ -36,7 +36,7 @@ export class SolidFill {
             return {
                 version: 3,
                 paletteIndex: paletteIndex,
-                alpha: this.opacity.valueAt(this._font.defaultLocation),
+                alpha: this.opacity.defaultValue,
                 varIndexBase
             } as PaintVarSolid;
 
@@ -89,13 +89,25 @@ export class GradientStop {
     get current_opacity(): number {
         return this.opacity.valueAt(this._font.normalizedLocation);
     }
-    toOpenType(compiler: Compiler): ColorStop {
+    toOpenType(compiler: Compiler, variable: boolean): ColorStop | VarColorStop {
         const paletteIndex = compiler.palette!.indexOf(this.color);
+        if (variable) {
+            let varIndexBase = compiler.deltaset.length;
+            compiler.deltaset.push({
+                entry: this.opacity.addToVarStore(compiler.builder, f2dot14),
+            });
+            return {
+                stopOffset: this.offset / 100,
+                paletteIndex,
+                alpha: this.opacity.defaultValue,
+                varIndexBase
+            } as VarColorStop;
+        }
         return {
             stopOffset: this.offset / 100,
             paletteIndex,
             alpha: this.current_opacity // TODO: support variable opacity
-        };
+        } as ColorStop;
     }
 
     clone(): GradientStop {
@@ -110,61 +122,152 @@ export class LinearGradientFill {
     _font: PainterFont;
     stops: GradientStop[];
     type: string;
-    x0: number;
-    y0: number;
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
+    x0: VariableScalar;
+    y0: VariableScalar;
+    x1: VariableScalar;
+    y1: VariableScalar;
+    x2: VariableScalar;
+    y2: VariableScalar;
 
-    constructor(stops: GradientStop[], x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, font: PainterFont) {
+    constructor(stops: GradientStop[],
+        x0: number | VariableScalar,
+        y0: number | VariableScalar,
+        x1: number | VariableScalar,
+        y1: number | VariableScalar,
+        x2: number | VariableScalar,
+        y2: number | VariableScalar,
+        font: PainterFont) {
         this._font = font;
         this.stops = stops;
-        this.x0 = x0;
-        this.y0 = y0;
-        this.x1 = x1;
-        this.y1 = y1;
-        this.x2 = x2;
-        this.y2 = y2;
+        if (typeof x0 == "number") {
+            this.x0 = new VariableScalar(Object.keys(this._font.axes));
+            this.x0.addValue(font.defaultLocation, x0);
+        } else {
+            this.x0 = x0;
+        }
+        if (typeof y0 == "number") {
+            this.y0 = new VariableScalar(Object.keys(this._font.axes));
+            this.y0.addValue(font.defaultLocation, y0);
+        } else {
+            this.y0 = y0;
+        }
+        if (typeof x1 == "number") {
+            this.x1 = new VariableScalar(Object.keys(this._font.axes));
+            this.x1.addValue(font.defaultLocation, x1);
+        } else {
+            this.x1 = x1;
+        }
+        if (typeof y1 == "number") {
+            this.y1 = new VariableScalar(Object.keys(this._font.axes));
+            this.y1.addValue(font.defaultLocation, y1);
+        } else {
+            this.y1 = y1;
+        }
+        if (typeof x2 == "number") {
+            this.x2 = new VariableScalar(Object.keys(this._font.axes));
+            this.x2.addValue(font.defaultLocation, x2);
+        } else {
+            this.x2 = x2;
+        }
+        if (typeof y2 == "number") {
+            this.y2 = new VariableScalar(Object.keys(this._font.axes));
+            this.y2.addValue(font.defaultLocation, y2);
+        } else {
+            this.y2 = y2;
+        }
         this.type = "LinearGradientFill"
+        console.log(this);
     }
 
     public static inflate(s: any, f: PainterFont): LinearGradientFill {
         let stops = s.stops.map((stop: any) => GradientStop.inflate(stop, f));
-        return new LinearGradientFill(stops, s.x0, s.y0, s.x1, s.y1, s.x2, s.y2, f);
+        return new LinearGradientFill(stops,
+            VariableScalar.inflate(s.x0, f),
+            VariableScalar.inflate(s.y0, f),
+            VariableScalar.inflate(s.x1, f),
+            VariableScalar.inflate(s.y1, f),
+            VariableScalar.inflate(s.x2, f),
+            VariableScalar.inflate(s.y2, f),
+            f);
     }
 
-    toOpenType(compiler: Compiler): PaintLinearGradient {
-        let colorline = {
-            extend: 0,
-            numStops: this.stops.length,
-            colorStops: this.stops.map((stop) => stop.toOpenType(compiler))
+    toOpenType(compiler: Compiler): PaintLinearGradient | PaintVarLinearGradient {
+        if (!this.x0.doesVary && !this.y0.doesVary && !this.x1.doesVary && !this.y1.doesVary && !this.x2.doesVary && !this.y2.doesVary) {
+            return {
+                version: 4,
+                colorLine: {
+                    extend: 0,
+                    numStops: this.stops.length,
+                    colorStops: this.stops.map((stop) => stop.toOpenType(compiler, false))
+                },
+                x0: this.x0.defaultValue,
+                y0: this.y0.defaultValue,
+                x1: this.x1.defaultValue,
+                y1: this.y1.defaultValue,
+                x2: this.x2.defaultValue,
+                y2: this.y2.defaultValue,
+            } as PaintLinearGradient;
+        }
+        let colorStops: VarColorStop[] = this.stops.map((stop) => stop.toOpenType(compiler, true) as VarColorStop);
+        let varColorLine: VarColorLine = {
+                extend: 0,
+                numStops: this.stops.length,
+                colorStops
         };
+        let varIndexBase = compiler.deltaset.length;
+        for (var element of ["x0", "y0", "x1", "y1", "x2", "y2"]) {
+            compiler.deltaset.push({
+                // @ts-ignore
+                entry: this[element].addToVarStore(compiler.builder),
+            });
+        }
         return {
-            version: 4,
-            colorLine: colorline,
-            x0: this.x0,
-            y0: this.y0,
-            x1: this.x1,
-            y1: this.y1,
-            x2: this.x2,
-            y2: this.y2,
-        };
+            version: 5,
+            colorLine: varColorLine,
+            x0: this.x0.defaultValue,
+            y0: this.y0.defaultValue,
+            x1: this.x1.defaultValue,
+            y1: this.y1.defaultValue,
+            x2: this.x2.defaultValue,
+            y2: this.y2.defaultValue,
+            varIndexBase
+        } as PaintVarLinearGradient;
+
+
     }
     get description(): string {
         return `GradientFill`;
     }
 
+    get current_x0(): number {
+        return this.x0.valueAt(this._font.normalizedLocation);
+    }
+    get current_y0(): number {
+        return this.y0.valueAt(this._font.normalizedLocation);
+    }
+    get current_x1(): number {
+        return this.x1.valueAt(this._font.normalizedLocation);
+    }
+    get current_y1(): number {
+        return this.y1.valueAt(this._font.normalizedLocation);
+    }
+    get current_x2(): number {
+        return this.x2.valueAt(this._font.normalizedLocation);
+    }
+    get current_y2(): number {
+        return this.y2.valueAt(this._font.normalizedLocation);
+    }
     endPoints(): [number, number] {
-        let d1x = this.x1 - this.x0;
-        let d1y = this.y1 - this.y0;
-        let d2x = this.x2 - this.x0;
-        let d2y = this.y2 - this.y0;
+        let d1x = this.current_x1 - this.current_x0;
+        let d1y = this.current_y1 - this.current_y0;
+        let d2x = this.current_x2 - this.current_x0;
+        let d2y = this.current_y2 - this.current_y0;
         let dotProd = d1x * d2x + d1y * d2y;
         let rotLenSq = d2x * d2x + d2y * d2y;
         let magnitude = dotProd / rotLenSq;
-        return [this.x1 - magnitude * d2x, this.y1 - magnitude * d2y];
+        return [this.current_x1 - magnitude * d2x, this.current_y1 - magnitude * d2y];
     }
+
     toSVG(doc: SVG.Svg) {
         let grad = doc.gradient("linear", (add) => {
             for (let stop of this.stops) {
@@ -172,7 +275,7 @@ export class LinearGradientFill {
             }
         });
         let [x2, y2] = this.endPoints();
-        grad.from(this.x0, this.y0);
+        grad.from(this.current_x0, this.current_y0);
         grad.to(x2, y2);
         grad.attr({ gradientUnits: "userSpaceOnUse" });
         this._element = grad;
@@ -180,7 +283,7 @@ export class LinearGradientFill {
     }
     toCSS(): React.CSSProperties {
         let [x2, y2] = this.endPoints();
-        let angle = 90 - Math.atan2(y2 - this.y0, x2) * 180 / Math.PI;
+        let angle = 90 - Math.atan2(y2 - this.current_y0, x2) * 180 / Math.PI;
         let grad = `linear-gradient(${angle}deg`;
         for (let stop of this.stops) {
             grad += `, ${stop.color} ${stop.offset}%`;
@@ -196,9 +299,9 @@ export class LinearGradientFill {
             colorline[stop.offset] = stop.color;
         }
         console.log(colorline);
-        let start = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.x0, "cy": this.y0, "fill": colorline[0] || "black" });
-        let end = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.x1, "cy": this.y1, "fill": colorline[100] || "black" });
-        let control = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.x2, "cy": this.y2, "fill": "black" });
+        let start = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0, "fill": colorline[0] || "black" });
+        let end = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x1, "cy": this.current_y1, "fill": colorline[100] || "black" });
+        let control = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x2, "cy": this.current_y2, "fill": "black" });
         let line = wireframe.line(start.cx(), start.cy(), end.cx(), end.cy()).attr({ "stroke": "black", "stroke-width": 0.5 }).id("wireframe-line");
         let balls = wireframe.group();
         let makeballs = () => {
@@ -208,8 +311,8 @@ export class LinearGradientFill {
                     continue;
                 }
                 balls.circle(15).attr({
-                    cx: this.x0 + (this.x1 - this.x0) * stop.offset / 100,
-                    cy: this.y0 + (this.y1 - this.y0) * stop.offset / 100,
+                    cx: this.current_x0 + (this.current_x1 - this.current_x0) * stop.offset / 100,
+                    cy: this.current_y0 + (this.current_y1 - this.current_y0) * stop.offset / 100,
                     fill: stop.color,
                     stroke: "white",
                     "stroke-width": 0.5
@@ -221,8 +324,8 @@ export class LinearGradientFill {
                 let ball = balls.children()[i];
                 let stop = this.stops[i + 1];
                 ball.attr({
-                    cx: this.x0 + (this.x1 - this.x0) * stop.offset / 100,
-                    cy: this.y0 + (this.y1 - this.y0) * stop.offset / 100,
+                    cx: this.current_x0 + (this.current_x1 - this.current_x0) * stop.offset / 100,
+                    cy: this.current_y0 + (this.current_y1 - this.current_y0) * stop.offset / 100,
                     fill: stop.color
                 });
             }
@@ -244,17 +347,17 @@ export class LinearGradientFill {
             rendering.fire("refreshtree");
         });
         start.on("dragmove", (e: any) => {
-            this.x0 = e.detail.box.x;
-            this.y0 = e.detail.box.y;
+            this.x0.addValue(this._font.normalizedLocation, e.detail.box.x);
+            this.y0.addValue(this._font.normalizedLocation, e.detail.box.y);
             updateBalls();
             if (this._element) {
-                this._element.from(this.x0, this.y0);
+                this._element.from(this.current_x0, this.current_y0);
             }
             line.plot(start.cx(), start.cy(), end.cx(), end.cy());
         });
         control.on("dragmove", (e: any) => {
-            this.x2 = e.detail.box.x;
-            this.y2 = e.detail.box.y;
+            this.x2.addValue(this._font.normalizedLocation, e.detail.box.x);
+            this.y2.addValue(this._font.normalizedLocation, e.detail.box.y);
             updateBalls();
             if (this._element) {
                 this._element.to(...this.endPoints());
@@ -262,8 +365,8 @@ export class LinearGradientFill {
             line.plot(start.cx(), start.cy(), end.cx(), end.cy());
         });
         end.on("dragmove", (e: any) => {
-            this.x1 = e.detail.box.x;
-            this.y1 = e.detail.box.y;
+            this.x1.addValue(this._font.normalizedLocation, e.detail.box.x);
+            this.y1.addValue(this._font.normalizedLocation, e.detail.box.y);
             updateBalls();
             if (this._element) {
                 this._element.to(...this.endPoints());
@@ -283,12 +386,12 @@ export class LinearGradientFill {
     clone(): LinearGradientFill {
         let clonedstops = this.stops.map(s => s.clone());
         return new LinearGradientFill(clonedstops,
-            this.x0,
-            this.y0,
-            this.x1,
-            this.y1,
-            this.x2,
-            this.y2,
+            this.x0.clone(),
+            this.y0.clone(),
+            this.x1.clone(),
+            this.y1.clone(),
+            this.x2.clone(),
+            this.y2.clone(),
             this._font
         );
     }

@@ -55,7 +55,7 @@ export interface PaintLinearGradient {
     y2: number
 }
 
-export interface VarPaintLinearGradient {
+export interface PaintVarLinearGradient {
     version: 5,
     colorLine: VarColorLine,
     x0: number,
@@ -116,4 +116,4 @@ export interface PaintVarTranslate {
     varIndexBase: number
 }
 
-export type Paint = PaintColrLayers | PaintSolid | PaintVarSolid | PaintLinearGradient | VarPaintLinearGradient | PaintGlyph | PaintColrGlyph | PaintTransform | PaintVarTransform | PaintTranslate | PaintVarTranslate;
+export type Paint = PaintColrLayers | PaintSolid | PaintVarSolid | PaintLinearGradient | PaintVarLinearGradient | PaintGlyph | PaintColrGlyph | PaintTransform | PaintVarTransform | PaintTranslate | PaintVarTranslate;

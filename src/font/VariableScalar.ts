@@ -132,6 +132,11 @@ export abstract class VariableThing<T> {
         }
     }
 
+    get defaultValue(): T {
+        let zero = Object.fromEntries(this.axes.map((k) => [k, 0])) as NormalizedLocation;
+        return this.valueAt(zero);
+    }
+
     addToVarStore(
         builder: VarStoreBuilder,
         convertor: OTConvertor<T> | null = null
