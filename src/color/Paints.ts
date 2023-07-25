@@ -109,6 +109,8 @@ export class Paint {
 
     clone(): Paint {
         let newVersion = new Paint(this.gid, this.fill.clone(), new SVG.Matrix(), this._font, this.gid!)
+        newVersion.locked = this.locked
+        newVersion.visible = this.visible
         newVersion.matrix = this.matrix.clone() as VariableMatrix
         return newVersion
     }
