@@ -7,7 +7,12 @@ import '@svgdotjs/svg.draggable.js'
 import '../svg.resize.js'
 import { VariableMatrix } from "../font/VariableMatrix";
 import { GradientObject } from 'react-best-gradient-color-picker'
-import { SolidFill, LinearGradientFill, GradientStop } from "./Fills";
+import { SolidFill } from "./SolidFill";
+import { LinearGradientFill } from './LinearGradientFill';
+import { RadialGradientFill } from './RadialGradientFill';
+import { GradientStop } from './GradientStop';
+
+export type GradientFill = LinearGradientFill | RadialGradientFill;
 
 export let SELF_GID = -1
 
@@ -89,7 +94,7 @@ function getMouseDownFunc(eventName: string, el: any) {
 
 export class Paint {
     gid: number | null;
-    fill: SolidFill | LinearGradientFill;
+    fill: SolidFill | GradientFill;
     matrix: VariableMatrix;
     locked: boolean = false;
     visible: boolean = true;
@@ -98,7 +103,7 @@ export class Paint {
     blendMode: BlendMode = BlendMode.Normal
     _keyhandler: ((e: KeyboardEvent) => void) | null = null
 
-    constructor(storedGid: number | null, fill: SolidFill | LinearGradientFill, matrix: Matrix, font: PainterFont, contextGid: number) {
+    constructor(storedGid: number | null, fill: SolidFill | GradientFill, matrix: Matrix, font: PainterFont, contextGid: number) {
         this.gid = storedGid;
         this.fill = fill;
         this._font = font;
@@ -116,13 +121,20 @@ export class Paint {
     }
 
     public static inflate(obj: any, f: PainterFont): Paint {
-        let fill: SolidFill | LinearGradientFill
-        if (obj.fill.type == "SolidFill") {
-            fill = SolidFill.inflate(obj.fill, f)
-        } else {
-            fill = LinearGradientFill.inflate(obj.fill, f)
+        let fill: SolidFill | GradientFill
+        switch (obj.fill.type) {
+            case "linear-gradient":
+                fill = LinearGradientFill.inflate(obj.fill, f)
+                break;
+            case "radial-gradient":
+                fill = RadialGradientFill.inflate(obj.fill, f)
+                break;
+            case "solid":
+            default:
+                fill = SolidFill.inflate(obj.fill, f)
+                break;
         }
-        let matrix =new SVG.Matrix();
+        let matrix = new SVG.Matrix();
         let self = new Paint(obj.gid, fill, matrix, f, obj.gid);
         self.locked = obj.locked;
         self.visible = obj.visible;
@@ -156,11 +168,15 @@ export class Paint {
         }
 
         // If we were a gradient before, just update the stops
-        if (this.fill instanceof LinearGradientFill) {
-            this.fill.stops = newcolor.colors.map((c) => new GradientStop(c.value, c.left!, 1.0, this._font))
-        } else {
-            let bbox = this._rendering.bbox().transform(this.current_matrix.inverse());
-            let newfill = new LinearGradientFill([],
+        if (this.fill.type == newcolor.gradientType) {
+            (this.fill as GradientFill).stops = newcolor.colors.map((c) => new GradientStop(c.value, c.left!, 1.0, this._font))
+            return;
+        }
+        let bbox = this._rendering.bbox().transform(this.current_matrix.inverse());
+        let newfill: GradientFill;
+        console.log(newcolor.gradientType);
+        if (newcolor.gradientType == "linear-gradient") {
+            newfill = new LinearGradientFill([],
                 bbox.x - 5,  // x0
                 bbox.y - 5,  // y0,
                 bbox.x2 + 5,  // x1,
@@ -168,10 +184,18 @@ export class Paint {
                 bbox.x - 5,   // x2, ???
                 bbox.y2 + 5,  // y2 ???
                 this._font)
-            newfill.stops = newcolor.colors.map((c) => new GradientStop(c.value, c.left!, 1.0, this._font))
-            this.fill = newfill;
+        } else {
+            newfill = new RadialGradientFill([],
+                bbox.cx,  // cx
+                bbox.cy,  // cy
+                Math.max(bbox.height, bbox.width) / 2,  // r
+                bbox.cx,  // fx
+                bbox.cy,  // fy
+                0,
+                this._font)
         }
-        console.log("New fill is ", this.fill)
+        newfill.stops = newcolor.colors.map((c) => new GradientStop(c.value, c.left!, 1.0, this._font))
+        this.fill = newfill;
     }
 
     render(selectedGid: number, header: SVG.Svg | null = null) {
@@ -191,7 +215,7 @@ export class Paint {
         if (this.fill instanceof SolidFill) {
             this._rendering.attr({ "fill": this.fill.color });
             this._rendering.attr({ "fill-opacity": (this.fill.current_opacity * 100).toString() + "%" });
-        } else if (this.fill instanceof LinearGradientFill && header != null) {
+        } else if (header != null) {
             let gradient = this.fill.toSVG(header)
             this._rendering.attr({ "fill": gradient })
         }
@@ -363,8 +387,8 @@ export class Paint {
             document.addEventListener("keydown", this._keyhandler);
         }
 
-        if (this.fill instanceof LinearGradientFill) {
-            this.fill.onSelected(this._rendering)
+        if (this.fill.type != "solid") {
+            (this.fill as GradientFill).onSelected(this._rendering)
         }
     }
 

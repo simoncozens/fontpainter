@@ -3,7 +3,7 @@ import '@svgdotjs/svg.draggable.js'
 import { Font, create } from "fontkit";
 import { Paint, SELF_GID } from "../color/Paints";
 import { Palette } from "../color/Palette";
-import { SolidBlackFill, SolidFill } from "../color/Fills";
+import { SolidBlackFill, SolidFill } from "../color/SolidFill";
 import { COLR } from "../fontkit-bits/tables/COLR";
 import CPAL from "../fontkit-bits/tables/CPAL";
 

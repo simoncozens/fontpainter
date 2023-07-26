@@ -1,128 +1,11 @@
 import { PainterFont } from '../font/Font';
 import * as SVG from "@svgdotjs/svg.js";
-import { VariableScalar, f2dot14 } from "../font/VariableScalar";
+import { VariableScalar } from "../font/VariableScalar";
 import { Compiler } from "../font/compiler";
 import { deleteAllChildren } from "./Paints";
-import { ColorStop, PaintLinearGradient, PaintVarLinearGradient, PaintSolid, PaintVarSolid, VarColorLine, VarColorStop } from './COLR';
-var tinycolor = require("tinycolor2");
+import { PaintLinearGradient, PaintVarLinearGradient, VarColorLine, VarColorStop } from './COLR';
+import { GradientStop } from './GradientStop';
 
-export class SolidFill {
-    color: string;
-    opacity: VariableScalar;
-    _font: PainterFont;
-    type: string;
-
-    constructor(color: string, opacity: number, font: PainterFont) {
-        this.color = color;
-        this._font = font;
-        this.type = "SolidFill";
-        this.opacity = new VariableScalar(Object.keys(font.axes));
-        this.opacity.addValue(font.defaultLocation, opacity);
-    }
-
-    public static inflate(s: any, f: PainterFont): SolidFill {
-        let fill = new SolidFill(s.color, 1.0, f);
-        fill.opacity = VariableScalar.inflate(s.opacity, f);
-        return fill;
-    }
-
-    toOpenType(compiler: Compiler): PaintSolid | PaintVarSolid {
-        const paletteIndex = compiler.palette!.indexOf(this.color);
-        if (this.opacity.doesVary) {
-            let varIndexBase = compiler.deltaset.length;
-            compiler.deltaset.push({
-                entry: this.opacity.addToVarStore(compiler.builder, f2dot14),
-            });
-            return {
-                version: 3,
-                paletteIndex: paletteIndex,
-                alpha: this.opacity.defaultValue,
-                varIndexBase
-            } as PaintVarSolid;
-
-        }
-        return {
-            version: 2,
-            paletteIndex,
-            alpha: this.current_opacity
-        } as PaintSolid;
-    }
-    get current_opacity(): number {
-        return this.opacity.valueAt(this._font.normalizedLocation);
-    }
-    get description(): string {
-        return `SolidFill(${this.color}, ${this.current_opacity})`;
-    }
-
-    toCSS(): React.CSSProperties { return { "backgroundColor": this.color }; }
-
-    clone(): SolidFill {
-        let cloned = new SolidFill(this.color, this.current_opacity, this._font);
-        cloned.opacity = this.opacity.clone() as VariableScalar;
-        return cloned;
-
-    }
-}
-
-export let SolidBlackFill = (font: PainterFont) => new SolidFill("#000000", 1, font);
-
-export class GradientStop {
-    color: string;
-    offset: number;
-    opacity: VariableScalar;
-    _font: PainterFont;
-
-    constructor(color: string, offset: number, opacity: number, font: PainterFont) {
-        this.color = color;
-        this.offset = offset;
-        this._font = font;
-        this.opacity = new VariableScalar(Object.keys(font.axes));
-        this.opacity.addValue(font.defaultLocation, opacity);
-    }
-
-    public static inflate(s: any, f: PainterFont): GradientStop {
-        let stop = new GradientStop(s.color, s.offset, 1.0, f);
-        stop.opacity = VariableScalar.inflate(s.opacity, f);
-        return stop;
-    }
-
-    get current_opacity(): number {
-        return this.opacity.valueAt(this._font.normalizedLocation);
-    }
-
-    get multiplied_color(): string {
-        let c = tinycolor(this.color);
-        let o = this.current_opacity;
-        return c.setAlpha(c.getAlpha() * o).toRgbString();
-    }
-
-    toOpenType(compiler: Compiler, variable: boolean): ColorStop | VarColorStop {
-        const paletteIndex = compiler.palette!.indexOf(this.color);
-        if (variable) {
-            let varIndexBase = compiler.deltaset.length;
-            compiler.deltaset.push({
-                entry: this.opacity.addToVarStore(compiler.builder, f2dot14),
-            });
-            return {
-                stopOffset: this.offset / 100,
-                paletteIndex,
-                alpha: this.opacity.defaultValue,
-                varIndexBase
-            } as VarColorStop;
-        }
-        return {
-            stopOffset: this.offset / 100,
-            paletteIndex,
-            alpha: this.current_opacity
-        } as ColorStop;
-    }
-
-    clone(): GradientStop {
-        let cloned = new GradientStop(this.color, this.offset, this.current_opacity, this._font);
-        cloned.opacity = this.opacity.clone() as VariableScalar;
-        return cloned;
-    }
-}
 
 export class LinearGradientFill {
     _element: SVG.Gradient | null = null;
@@ -182,7 +65,7 @@ export class LinearGradientFill {
         } else {
             this.y2 = y2;
         }
-        this.type = "LinearGradientFill"
+        this.type = "linear-gradient";
         console.log(this);
     }
 
@@ -200,7 +83,7 @@ export class LinearGradientFill {
 
     doesVary(): boolean {
         if (this.x0.doesVary || this.y0.doesVary || this.x1.doesVary || this.y1.doesVary || this.x2.doesVary || this.y2.doesVary) {
-            return true
+            return true;
         }
         for (let stop of this.stops) {
             if (stop.opacity.doesVary) {
@@ -229,9 +112,9 @@ export class LinearGradientFill {
         }
         let colorStops: VarColorStop[] = this.stops.map((stop) => stop.toOpenType(compiler, true) as VarColorStop);
         let varColorLine: VarColorLine = {
-                extend: 0,
-                numStops: this.stops.length,
-                colorStops
+            extend: 0,
+            numStops: this.stops.length,
+            colorStops
         };
         let varIndexBase = compiler.deltaset.length;
         for (var element of ["x0", "y0", "x1", "y1", "x2", "y2"]) {

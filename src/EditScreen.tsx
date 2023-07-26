@@ -36,7 +36,6 @@ export default function EditScreen() {
         }
       };
     let svgEl: SVG.Svg | null = null;
-    console.log("Rerender");
 
     const svg = React.useRef(document.createElement("div"));
     if (fc.font && fc.paintLayers.length > 0 && fc.selectedGid != null) {
@@ -64,7 +63,6 @@ export default function EditScreen() {
         if (fc.viewbox!.current! != null) {
             svgEl.viewbox(fc.viewbox!.current!);
         }
-        console.log(mode);
         svgEl.panZoom({
             zoomFactor: 0.5,
             zoomMin: 0.5,

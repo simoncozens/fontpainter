@@ -2,7 +2,7 @@ import { Matrix } from "@svgdotjs/svg.js";
 import { PainterFont } from "./Font";
 import { BlendMode, Paint, SELF_GID } from "../color/Paints";
 import { Palette } from "../color/Palette";
-import { SolidFill } from "../color/Fills";
+import { SolidFill } from "../color/SolidFill";
 import { VarStore, VarStoreBuilder } from "./varstorebuilder";
 import { MatrixType, VariableMatrix, matrixType } from "./VariableMatrix";
 import { PaintGlyph } from "../color/COLR";

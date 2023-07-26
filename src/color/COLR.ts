@@ -67,6 +67,29 @@ export interface PaintVarLinearGradient {
     varIndexBase: number
 }
 
+export interface PaintRadialGradient {
+    version: 6,
+    colorLine: ColorLine,
+    x0: number,
+    y0: number,
+    radius0: number,
+    x1: number,
+    y1: number,
+    radius1: number
+}
+
+export interface PaintVarRadialGradient {
+    version: 7,
+    colorLine: VarColorLine,
+    x0: number,
+    y0: number,
+    radius0: number,
+    x1: number,
+    y1: number,
+    radius1: number,
+    varIndexBase: number
+}
+
 export interface PaintGlyph {
     version: 10,
     paint: Paint,

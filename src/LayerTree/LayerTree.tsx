@@ -29,7 +29,7 @@ import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import { Paint, BlendMode, SELF_GID } from '../color/Paints';
-import { SolidBlackFill } from "../color/Fills";
+import { SolidBlackFill } from "../color/SolidFill";
 import { GlyphInfo } from '../font/Font';
 import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
 import { Matrix } from '@svgdotjs/svg.js';

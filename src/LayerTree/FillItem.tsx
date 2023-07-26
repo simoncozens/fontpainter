@@ -9,7 +9,8 @@ import ButtonBase from '@mui/material/ButtonBase';
 import IconButton from '@mui/material/IconButton';
 import Popover from '@mui/material/Popover';
 import { Paint } from '../color/Paints';
-import { LinearGradientFill, SolidFill } from "../color/Fills";
+import { SolidFill } from "../color/SolidFill";
+import { GradientFill } from '../color/Paints';
 import ColorPicker, { useColorPicker } from 'react-best-gradient-color-picker';
 import MultipleStop from '@mui/icons-material/MultipleStop';
 import { FontContext, FontContextType } from "../App";
@@ -75,7 +76,7 @@ function SolidFillOpacitySlider(props: FillItemProps) {
 
 function GradientFillOpacitySliders(props: FillItemProps) {
     const fc: FontContextType = React.useContext(FontContext);
-    let fill: LinearGradientFill = props.paint.fill as LinearGradientFill;
+    let fill: GradientFill = props.paint.fill as GradientFill;
     let opacities: number[] = fill.stops.map((stop) => 100 * stop.opacity.valueAt(fc.font!.normalizedLocation));
     const [gradientFillOpacity, setGradientFillOpacity] = React.useState<number[]>(opacities);
 
@@ -104,7 +105,6 @@ function GradientFillOpacitySliders(props: FillItemProps) {
                                 return newOpacities;
                             });
                             fill.stops[stopIndex].opacity.addValue(fc.font!.normalizedLocation, newOpacity / 100);
-                            console.log(fill.stops[stopIndex]);
                             props.redrawPaints();
                         }}
                         aria-labelledby="input-slider"
@@ -179,8 +179,7 @@ export function FillItem(props: FillItemProps) {
         >
             <Box sx={{ paddingRight: 2 }}>
                 <Typography variant="body2" sx={{ fontWeight: 'inherit' }}>
-                    {props.paint.fill.type == "SolidFill" ? "Solid " : "Gradient "}
-                    Fill
+                    {props.paint.fill.type.replace("Fill", " Fill")}
                 </Typography>
             </Box>
             <Box sx={{ paddingRight: 2, flex: 1 }}>
@@ -200,9 +199,9 @@ export function FillItem(props: FillItemProps) {
                         onChange={handleChange} />
                 </Popover>
             </Box>
-            {(props.paint.fill.type == "SolidFill") && <SolidFillOpacitySlider {...props} />}
+            {(props.paint.fill.type == "solid") && <SolidFillOpacitySlider {...props} />}
         </Box>}>
-        {(props.paint.fill.type == "LinearGradientFill") && <GradientFillOpacitySliders {...props} />}
+        {(props.paint.fill.type != "solid") && <GradientFillOpacitySliders {...props} />}
 
     </StyledTreeItemRoot>;
 }
