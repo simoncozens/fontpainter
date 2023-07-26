@@ -56,7 +56,6 @@ export abstract class VariableThing<T> {
             }
             out.push(val);
         }
-        console.log("locations: ", out);
         return out;
 
     }

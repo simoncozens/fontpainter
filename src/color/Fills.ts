@@ -4,7 +4,7 @@ import { VariableScalar, f2dot14 } from "../font/VariableScalar";
 import { Compiler } from "../font/compiler";
 import { deleteAllChildren } from "./Paints";
 import { ColorStop, PaintLinearGradient, PaintVarLinearGradient, PaintSolid, PaintVarSolid, VarColorLine, VarColorStop } from './COLR';
-
+var tinycolor = require("tinycolor2");
 
 export class SolidFill {
     color: string;
@@ -89,6 +89,13 @@ export class GradientStop {
     get current_opacity(): number {
         return this.opacity.valueAt(this._font.normalizedLocation);
     }
+
+    get multiplied_color(): string {
+        let c = tinycolor(this.color);
+        let o = this.current_opacity;
+        return c.setAlpha(c.getAlpha() * o).toRgbString();
+    }
+
     toOpenType(compiler: Compiler, variable: boolean): ColorStop | VarColorStop {
         const paletteIndex = compiler.palette!.indexOf(this.color);
         if (variable) {
@@ -106,7 +113,7 @@ export class GradientStop {
         return {
             stopOffset: this.offset / 100,
             paletteIndex,
-            alpha: this.current_opacity // TODO: support variable opacity
+            alpha: this.current_opacity
         } as ColorStop;
     }
 
@@ -191,8 +198,20 @@ export class LinearGradientFill {
             f);
     }
 
+    doesVary(): boolean {
+        if (this.x0.doesVary || this.y0.doesVary || this.x1.doesVary || this.y1.doesVary || this.x2.doesVary || this.y2.doesVary) {
+            return true
+        }
+        for (let stop of this.stops) {
+            if (stop.opacity.doesVary) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     toOpenType(compiler: Compiler): PaintLinearGradient | PaintVarLinearGradient {
-        if (!this.x0.doesVary && !this.y0.doesVary && !this.x1.doesVary && !this.y1.doesVary && !this.x2.doesVary && !this.y2.doesVary) {
+        if (!this.doesVary()) {
             return {
                 version: 4,
                 colorLine: {
@@ -271,7 +290,7 @@ export class LinearGradientFill {
     toSVG(doc: SVG.Svg) {
         let grad = doc.gradient("linear", (add) => {
             for (let stop of this.stops) {
-                add.stop(stop.offset / 100, stop.color);
+                add.stop(stop.offset / 100, stop.multiplied_color);
             }
         });
         let [x2, y2] = this.endPoints();

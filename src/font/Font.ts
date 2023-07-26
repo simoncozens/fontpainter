@@ -148,40 +148,8 @@ export class PainterFont {
 
   getPaintLayers(gid: number): Paint[] {
     if (!this.paints.has(gid)) {
-      // if (gid == 1) {
-      //   this.paints.set(gid, [
-      //     new Paint(384, new LinearGradientFill([
-      //       new GradientStop("#C8FFFF", 0.0, 1.0),
-      //       new GradientStop("#968CFA", 0.25, 1.0),
-      //       new GradientStop("#FF00DC", 0.5, 1.0),
-      //       new GradientStop("#FF82AA", 0.75, 1.0),
-      //       new GradientStop("#FFDCDC", 1.0, 1.0),
-      //     ],
-      //       0.0, 0.0, 1000.0, 1000.0, 0.0, -50.0
-      //     ), new SVG.Matrix(), this, 384),
-      //     new Paint(383, new LinearGradientFill([
-      //       new GradientStop("#C8FFFF", 0.0, 1.0),
-      //       new GradientStop("#968CFA", 0.25, 1.0),
-      //       new GradientStop("#FF00DC", 0.5, 1.0),
-      //       new GradientStop("#FF82AA", 0.75, 1.0),
-      //       new GradientStop("#FFDCDC", 1.0, 1.0),
-      //     ],
-      //       0.0, 0.0, 1000.0, 1000.0, 0.0, -50.0
-      //     ), new SVG.Matrix(), this, 383),
-      //     new Paint(1, new LinearGradientFill([
-      //       new GradientStop("#641EFF", 0.0, 1.0),
-      //       new GradientStop("#E6E6C8", 0.5, 1.0),
-      //       new GradientStop("#FF1463", 1.0, 1.0),
-      //     ],
-      //       0.0, 0.0, 1000.0, 1000.0, 0.0, -50.0
-      //     ), new SVG.Matrix(), this, 1),
-      //   ])
-      //   this.paints.get(gid)![1].locked = true
-
-      // } else {
       let basicPaint = new Paint(SELF_GID, SolidBlackFill(this), new SVG.Matrix(), this, gid);
       this.paints.set(gid, [basicPaint])
-      // }
     }
     this.updatePalette();
     return this.paints.get(gid) as Paint[];
@@ -202,11 +170,11 @@ export class PainterFont {
 
   saveColr(): [any, any] {
     // Ensure all paint layers exist
-    var id = 0;
-    while (id < this.fkFont.numGlyphs) {
-      this.getPaintLayers(id);
-      id += 1;
-    }
+    // var id = 0;
+    // while (id < this.fkFont.numGlyphs) {
+    //   this.getPaintLayers(id);
+    //   id += 1;
+    // }
     let compiler = new Compiler(this);
     compiler.compile()
     return [compiler.colr, compiler.palette]
