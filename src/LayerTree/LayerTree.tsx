@@ -271,10 +271,10 @@ export default function LayerTree() {
         if (fc.paintLayers) {
             for (let i = 0; i < fc.paintLayers.length; i++) {
                 if (i == selectedIndex) {
-                    fc.paintLayers[i].onSelected()
+                    fc.selectLayer(i);
                     setBlendMode(fc.paintLayers[i].blendMode)
                 } else {
-                    fc.paintLayers[i].onDeselected()
+                    fc.selectLayer(null);
                 }
             }
             fc.selectLayer(selectedIndex)
