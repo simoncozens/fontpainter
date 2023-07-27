@@ -14,12 +14,6 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Tooltip from '@mui/material/Tooltip';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -36,11 +30,14 @@ import { Matrix } from '@svgdotjs/svg.js';
 import { createFilterOptions } from '@mui/material/Autocomplete';
 import ContentCopy from '@mui/icons-material/ContentCopy';
 import ContentPaste from '@mui/icons-material/ContentPaste';
+import DragHandle from '@mui/icons-material/DragHandle';
 import ContentPasteGoTwoTone from '@mui/icons-material/ContentPasteGoTwoTone';
 import { FontContext, FontContextType } from "../App";
 import { FillItem } from './FillItem';
 import { TransformItem } from './TransformItem';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import { ConfirmPasteAllDialog } from './PasteAllDialog';
+import { DraggableLabel } from './DraggableLabel';
 
 const filterOptions = createFilterOptions({
     matchFrom: 'start',
@@ -54,14 +51,10 @@ declare module 'react' {
     }
 }
 
-
 type StyledTreeItemProps = TreeItemProps & {
-    bgColor?: string;
-    bgColorForDarkMode?: string;
-    color?: string;
-    colorForDarkMode?: string;
     paint: Paint;
     redrawPaints: () => void;
+    onNodeReOrder:  (ev: React.DragEvent<HTMLDivElement>, nodeId: string, isBeforeDestinationNode: boolean) => void;
 };
 
 export const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
@@ -98,27 +91,18 @@ const TopTreeItemRoot = styled(StyledTreeItemRoot)(({ theme }) => ({
     "borderBottom": "1px solid " + theme.palette.divider,
 }));
 
-
-function StyledTreeItem(props: StyledTreeItemProps) {
+    
+function TopTreeItem(props: StyledTreeItemProps) {
     const fc: FontContextType = React.useContext(FontContext);
     const theme = useTheme();
     const {
-        bgColor,
-        color,
         paint: Paint,
         nodeId,
         label,
-        colorForDarkMode,
-        bgColorForDarkMode,
         redrawPaints,
         ...other
     } = props;
 
-    const styleProps = {
-        '--tree-view-color': theme.palette.mode !== 'dark' ? color : colorForDarkMode,
-        '--tree-view-bg-color':
-            theme.palette.mode !== 'dark' ? bgColor : bgColorForDarkMode,
-    };
     const [renaming, setRenaming] = React.useState<boolean>(false);
 
     let toggleLocked = () => {
@@ -135,76 +119,86 @@ function StyledTreeItem(props: StyledTreeItemProps) {
         <TopTreeItemRoot
             nodeId={nodeId}
             key={nodeId}
+            draggable={true}
+            onDragStart={ props.onDragStart }
             label={
-                <Box
-                    sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        pr: 0,
-                    }}
-                >
-                    <Box sx={{ paddingRight: 1 }}>
-                        <Typography sx={{ fontWeight: 'inherit' }}>
-                            {label}
+                <DraggableLabel onNodeReOrder={ (ev, isBeforeDestinationNode) => {
+                    props.onNodeReOrder(ev, nodeId, isBeforeDestinationNode) }
+                }>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            pr: 0,
+                        }}
+                    >
+                        <Box sx={{ paddingRight: 1 }}>
+                            <Typography sx={{ fontWeight: 'inherit' }}>
+                                {label}
+                            </Typography>
+                        </Box>
+                        <Box>
+                            <IconButton onClick={toggleLocked}>
+                                <Tooltip title="Locked">
+                                    {props.paint.locked ? <LockIcon /> : <Icon />}
+                                </Tooltip>
+                            </IconButton>
+                        </Box>
+                        <Box sx={{ paddingRight: 1 }}>
+                            <IconButton onClick={toggleVisible}>
+                                <Tooltip title="Visible">
+                                    {props.paint.visible ? <VisibilityIcon /> : <Icon />}
+                                </Tooltip>
+                            </IconButton>
+                        </Box>
+                        <Box sx={{ paddingRight: 1 }}>
+                            <Box
+                                sx={{
+                                    width: 24, height: 24,
+                                    ...props.paint.fill.toCSS()
+                                }}>
+                            </Box>
+                        </Box>
+                        {renaming && fc.font ?
+                            <Autocomplete
+                                options={[
+                                    { id: SELF_GID, name: "<Self>", unicode: null },
+                                    ...fc.font!.glyphInfos()
+                                ]}
+                                getOptionLabel={(option) => option.name}
+                                sx={{ fontWeight: 'inherit', flexGrow: 1 }}
+                                value={props.paint.gid ? fc.font!.glyphInfos()[props.paint.gid] : null}
+                                renderInput={(params) => <TextField {...params} />}
+                                filterOptions={filterOptions}
+                                autoHighlight={true}
+                                onChange={(evt, value) => {
+                                    if (value) {
+                                        props.paint.gid = value.id;
+                                        setRenaming(false);
+                                        redrawPaints();
+                                    }
+                                }}
+                            />
+                            :
+                            <Typography sx={{ fontWeight: 'inherit', flexGrow: 1 }} onDoubleClick={
+                                () => {
+                                    setRenaming(true);
+                                }
+                            }>
+                                {props.paint.label}
+                            </Typography>
+                        }
+                        <Typography variant="caption" sx={{ fontWeight: 'inherit' }}>
+                            {props.paint.matrix.label_value(props.paint.current_matrix)}
                         </Typography>
-                    </Box>
-                    <Box>
-                        <IconButton onClick={toggleLocked}>
-                            <Tooltip title="Locked">
-                                {props.paint.locked ? <LockIcon /> : <Icon />}
-                            </Tooltip>
-                        </IconButton>
-                    </Box>
-                    <Box sx={{paddingRight: 1}}>
-                        <IconButton onClick={toggleVisible}>
-                            <Tooltip title="Visible">
-                                {props.paint.visible ? <VisibilityIcon /> : <Icon />}
-                            </Tooltip>
-                        </IconButton>
-                    </Box>
-                    <Box sx={{ paddingRight: 1 }}>
-                        <Box
-                            sx={{
-                                width: 24, height: 24,
-                                ...props.paint.fill.toCSS()
-                            }}>
+                        <Box sx={{ paddingRight: 1 }}>
+                            <IconButton>
+                                <DragHandle />
+                            </IconButton>
                         </Box>
                     </Box>
-                    {renaming && fc.font ?
-                        <Autocomplete
-                            options={[
-                                { id: SELF_GID, name: "<Self>", unicode: null },
-                                ...fc.font!.glyphInfos()
-                            ]}
-                            getOptionLabel={(option) => option.name}
-                            sx={{ fontWeight: 'inherit', flexGrow: 1 }}
-                            value={props.paint.gid ? fc.font!.glyphInfos()[props.paint.gid] : null}
-                            renderInput={(params) => <TextField {...params} />}
-                            filterOptions={filterOptions}
-                            autoHighlight={true}
-                            onChange={(evt, value) => {
-                                if (value) {
-                                    props.paint.gid = value.id;
-                                    setRenaming(false);
-                                    redrawPaints();
-                                }
-                            }}
-                        />
-                        :
-                        <Typography sx={{ fontWeight: 'inherit', flexGrow: 1 }} onDoubleClick={
-                            () => {
-                                setRenaming(true);
-                            }
-                        }>
-                            {props.paint.label}
-                        </Typography>
-                    }
-                    <Typography variant="caption" sx={{ fontWeight: 'inherit' }}>
-                        {props.paint.matrix.label_value(props.paint.current_matrix)}
-                    </Typography>
-                </Box>
+                </DraggableLabel>
             }
-            style={styleProps}
             {...other}
         >
             <FillItem nodeId={nodeId.toString() + ".fill"} paint={props.paint} redrawPaints={props.redrawPaints} />
@@ -214,57 +208,12 @@ function StyledTreeItem(props: StyledTreeItemProps) {
 }
 
 
-export interface ConfirmDialogProps {
-    open: boolean;
-    onClose: () => void;
-}
-
-function ConfirmPasteAllDialog(props: ConfirmDialogProps) {
-    const { onClose, open } = props;
-    const fc: FontContextType = React.useContext(FontContext);
-    const handleOk = () => {
-        let gid = 0;
-        while (gid < fc.font!.numGlyphs) {
-            let clonedFromClipboard = fc.clipboard!.map(p => p.clone())
-            fc.font!.paints.set(gid, clonedFromClipboard)
-            gid += 1;
-        }
-        fc.font!.updatePalette();
-        fc.selectLayer(null);
-        onClose();
-    };
-
-    return (
-        <Dialog
-            open={props.open}
-            sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
-            maxWidth="xs"
-        >
-            <DialogTitle>Paste to all glyphs?</DialogTitle>
-            <DialogContent dividers>
-                <DialogContentText>
-                    This will replace the contents of <i>all layers in all
-                        glyphs</i> with the contents of the clipboard. This is
-                    an extremely destructive operation. Are you sure you want
-                    to do this?
-                </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-                <Button autoFocus onClick={onClose}>
-                    Cancel
-                </Button>
-                <Button onClick={handleOk}>Ok</Button>
-            </DialogActions>
-        </Dialog>
-    );
-}
-
-
 export default function LayerTree() {
     const fc: FontContextType = React.useContext(FontContext);
 
     const [blendMode, setBlendMode] = React.useState<BlendMode>(BlendMode.Normal);
     const [dialogOpen, setDialogOpen] = React.useState(false);
+    let draggingId : number | null = null;
 
     function nodeSelect(event: React.SyntheticEvent, nodeIds: Array<string> | string) {
         let selectedIndex = parseInt(nodeIds as string, 10);
@@ -289,6 +238,18 @@ export default function LayerTree() {
             fc.selectLayer(fc.selectedLayer)
         }
     }
+
+    function handleDragReOrder(ev: React.DragEvent<HTMLDivElement>, nodeId: string, isBeforeDestinationNode: boolean) {
+        if (draggingId === null) { return }
+        let paints = fc.paintLayers!;
+        if (isBeforeDestinationNode) {
+            paints.splice(parseInt(nodeId), 0, paints.splice(draggingId, 1)[0]);
+        } else {
+            paints.splice(parseInt(nodeId) + 1, 0, paints.splice(draggingId, 1)[0]);
+        }
+        fc.setPaintLayers(([] as Paint[]).concat(paints));
+    }
+
 
     return (
         <Accordion sx={{ width: '100%' }} defaultExpanded={fc.font !== null} disabled={!fc.font}>
@@ -345,14 +306,19 @@ export default function LayerTree() {
                     selected={fc.selectedLayer?.toString() || ""}
                     sx={{ flexGrow: 1, overflowY: 'auto' }}
                 >
-                    {fc.paintLayers!.map((p: Paint, i: number) => <StyledTreeItem
+                    {fc.paintLayers!.map((p: Paint, i: number) => <TopTreeItem
                         nodeId={i.toString()}
                         label={(fc.paintLayers!.length - i).toString()}
                         paint={p} redrawPaints={() => {
                             fc.setPaintLayers(([] as Paint[]).concat(fc.paintLayers!));
-                        }
-                        }>
-                    </StyledTreeItem>)}
+                        }}
+                        onDragStart={(ev) => {
+                            draggingId = i;
+                        }}
+                        onNodeReOrder={handleDragReOrder}
+                        >
+                        
+                    </TopTreeItem>)}
                 </KeylessTreeView>
                 <Paper
                     sx={{
