@@ -168,8 +168,8 @@ export class RadialGradientFill {
         });
         grad.from(this.current_x0, this.current_y0);
         grad.to(this.current_x1, this.current_y1);
-        grad.radius(this.current_radius0);
-        grad.attr({ gradientUnits: "userSpaceOnUse", "fr": this.current_radius1 });
+        grad.radius(this.current_radius1);
+        grad.attr({ gradientUnits: "userSpaceOnUse", "fr": this.current_radius0 });
         this._element = grad;
         return grad;
     }
@@ -189,8 +189,8 @@ export class RadialGradientFill {
             colorline[stop.offset] = stop.color;
         }
         let start = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0, "fill": colorline[0] || "black" });
-        let end = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0 + this.current_radius0, "fill": colorline[100] || "black" });
-        wireframe.circle(this.current_radius0 * 2).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0, "fill": "none" });
+        let end = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0 + this.current_radius1, "fill": colorline[100] || "black" });
+        wireframe.circle(this.current_radius1 * 2).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0, "fill": "none" });
         let line = wireframe.line(start.cx(), start.cy(), end.cx(), end.cy()).attr({ "stroke": "black", "stroke-width": 0.5 }).id("wireframe-line");
         let balls = wireframe.group();
         let makeballs = () => {
