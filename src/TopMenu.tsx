@@ -11,11 +11,13 @@ import { DropzoneDialogBase } from "mui-file-dropzone";
 import { PainterFont } from "./font/Font";
 import Chip from '@mui/material/Chip';
 import Snackbar from '@mui/material/Snackbar';
+import { Redo, Undo } from '@mui/icons-material';
+import Box from '@mui/material/Box';
 
 interface FontDropProps {
     open: boolean,
     setOpen: React.Dispatch<React.SetStateAction<boolean>>,
-    snackOpener: () => void,
+    snackOpener: (message: string) => void,
     setFont: React.Dispatch<React.SetStateAction<PainterFont | null>>
 };
 
@@ -58,21 +60,31 @@ function FontDrop(props: FontDropProps) {
 
 interface TopMenuProps {
     setFont: React.Dispatch<React.SetStateAction<PainterFont | null>>,
-    font: PainterFont | null
+    font: PainterFont | null,
+    undo: (font: PainterFont) => boolean,
+    redo: (font: PainterFont) => boolean,
+    canUndo: () => boolean,
+    canRedo: () => boolean,
 }
 
 export default function TopMenu(props: TopMenuProps) {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-    const [openSnack, setOpenSnack] = React.useState(false);
+    const [snackIsOpen, setOpenSnack] = React.useState(false);
+    const [snackMessage, setSnackMessage] = React.useState("");
     const handleSnackClose = (event: React.SyntheticEvent | Event, reason?: string) => {
       if (reason === 'clickaway') { return; }
       setOpenSnack(false);
     };
-    let failureSnack = <Snackbar
-        open={openSnack}
+    const openSnack = (message: string) => {
+        setSnackMessage(message);
+        setOpenSnack(true);
+    }
+
+    let messageSnack = <Snackbar
+        open={snackIsOpen}
         autoHideDuration={5000}
         onClose={handleSnackClose}
-        message="Opening font failed"
+        message={snackMessage}
         action={<React.Fragment>
             <IconButton
             size="small"
@@ -104,6 +116,17 @@ export default function TopMenu(props: TopMenuProps) {
         handleClose()
     }
 
+    const handleUndo = () => {
+        if (props.font && props.undo(props.font!)) {
+            openSnack("Undo successful");
+        }
+    }
+
+    const handleRedo = () => {
+        if (props.font && props.redo(props.font!)) {
+            openSnack("Redo successful");
+        }
+    }
     return (
         <AppBar position="static">
             <Toolbar>
@@ -130,12 +153,21 @@ export default function TopMenu(props: TopMenuProps) {
                         Save
                     </MenuItem>
                 </Menu>
-                <FontDrop open={dropDialogOpen} setOpen={setDropDialogOpen} snackOpener={() => setOpenSnack(true)} setFont={props.setFont} />
+                <FontDrop open={dropDialogOpen} setOpen={setDropDialogOpen} snackOpener={(message: string) => openSnack(message)} setFont={props.setFont} />
                 <Typography variant="h6" component="div" sx={{ mr: 2}}>
                     FontPainter
                 </Typography>
                 <Chip label="alpha" color="error" />
-                {failureSnack}
+                <Box sx={{ flexGrow: 1 }} />
+                <IconButton disabled={!props.font || !props.canUndo()} onClick={handleUndo}>
+                    <Undo />
+                </IconButton>
+                <IconButton disabled={!props.font || !props.canRedo()} onClick={handleRedo}>
+                    <Redo />
+                </IconButton>
+                <Box sx={{ flexGrow: 1 }} />
+
+                {messageSnack}
             </Toolbar>
         </AppBar>
     )

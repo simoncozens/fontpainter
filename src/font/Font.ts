@@ -59,7 +59,7 @@ export class PainterFont {
   palette: Palette;
   glyphInfoCache: GlyphInfo[];
 
-  constructor(base64: string, filename: string, snackOpener: () => void, faceIdx: number = 0) {
+  constructor(base64: string, filename: string, snackOpener: (message: string) => void, faceIdx: number = 0) {
     let [_header, body] = base64.split(",", 2);
     this.filename = filename;
     this.fontBlob = base64ToUint8Array(body);
@@ -237,7 +237,7 @@ export class PainterFont {
     })
   }
 
-  try_inflate(onFail: () => void) {
+  try_inflate(onFail: (message: string) => void) {
     //@ts-ignore
     if (!("Pntr" in this.fkFont.directory.tables)) {
       return
@@ -255,7 +255,7 @@ export class PainterFont {
         this.paints.set(Number(gid), paints.map((p: any) => Paint.inflate(p, this)))
       }
     } catch (error) {
-      onFail();
+      onFail("Could not open project data from font");
     }
   }
 }

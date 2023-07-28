@@ -101,6 +101,7 @@ function TopTreeItem(props: StyledTreeItemProps) {
         nodeId,
         label,
         redrawPaints,
+        selectVariableThing,
         ...other
     } = props;
 
@@ -208,13 +209,13 @@ function TopTreeItem(props: StyledTreeItemProps) {
                 paint={props.paint}
                 redrawPaints={props.redrawPaints}
                 font={props.font}
-                selectVariableThing={props.selectVariableThing}
+                selectVariableThing={selectVariableThing}
             />
             <TransformItem
                 nodeId={nodeId.toString() + ".transform"}
                 paint={props.paint}
                 redrawPaints={props.redrawPaints}
-                selectVariableThing={props.selectVariableThing}
+                selectVariableThing={selectVariableThing}
             />
         </TopTreeItemRoot>
     );

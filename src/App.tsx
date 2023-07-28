@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useContext, createContext, Component } from 'react';
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import { PainterFont } from './font/Font';
@@ -15,6 +15,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import CssBaseline from '@mui/material/CssBaseline';
 import { VariableThing } from './font/VariableScalar';
 import { Variability } from './Variability';
+import { useUndoableState } from './UndoHandler';
 
 export default function App() {
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
@@ -35,7 +36,7 @@ export default function App() {
   const [selectedGid, selectGid] = useState<number | null>(null);
   const [selectedLayer, selectLayer] = useState<number | null>(null);
   const [selectedVariableThing, selectVariableThing] = useState<VariableThing<any> | null>(null);
-  const [paintLayers, setPaintLayers] = useState<Paint[]>([]);
+  const [paintLayers, setPaintLayers, { undo, redo, canUndo, canRedo }] = useUndoableState([]);
   const [clipboard, setClipboard] = useState<Paint[] | null>(null);
   function doSelectGid(gid: React.SetStateAction<number | null>) {
     if (font && gid) {
@@ -59,11 +60,11 @@ export default function App() {
       <CssBaseline />
 
       <Box sx={{ flexGrow: 1 }}>
-        <TopMenu font={font} setFont={setFont} />
+        <TopMenu font={font} setFont={setFont} undo={undo} canUndo={canUndo} redo={redo} canRedo={canRedo} />
 
         <Grid container spacing={2}>
           <Grid item xs={4}>
-            <GlyphGrid selectGid={selectGid} font={font} />
+            <GlyphGrid selectGid={doSelectGid} font={font} />
             <Axes
               refresh={() => setPaintLayers([...paintLayers])}
               font={font}
