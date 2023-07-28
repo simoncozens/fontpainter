@@ -24,7 +24,7 @@ import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import { Paint, BlendMode, SELF_GID } from '../color/Paints';
 import { SolidBlackFill } from "../color/SolidFill";
-import { GlyphInfo } from '../font/Font';
+import { GlyphInfo, PainterFont } from '../font/Font';
 import { Color, ColorButton, ColorBox, createColor } from 'mui-color';
 import { Matrix } from '@svgdotjs/svg.js';
 import { createFilterOptions } from '@mui/material/Autocomplete';
@@ -32,12 +32,12 @@ import ContentCopy from '@mui/icons-material/ContentCopy';
 import ContentPaste from '@mui/icons-material/ContentPaste';
 import DragHandle from '@mui/icons-material/DragHandle';
 import ContentPasteGoTwoTone from '@mui/icons-material/ContentPasteGoTwoTone';
-import { FontContext, FontContextType } from "../App";
 import { FillItem } from './FillItem';
 import { TransformItem } from './TransformItem';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { ConfirmPasteAllDialog } from './PasteAllDialog';
 import { DraggableLabel } from './DraggableLabel';
+import { VariableThing } from '../font/VariableScalar';
 
 const filterOptions = createFilterOptions({
     matchFrom: 'start',
@@ -53,8 +53,10 @@ declare module 'react' {
 
 type StyledTreeItemProps = TreeItemProps & {
     paint: Paint;
+    font: PainterFont | null,
     redrawPaints: () => void;
-    onNodeReOrder:  (ev: React.DragEvent<HTMLDivElement>, nodeId: string, isBeforeDestinationNode: boolean) => void;
+    onNodeReOrder: (ev: React.DragEvent<HTMLDivElement>, nodeId: string, isBeforeDestinationNode: boolean) => void;
+    selectVariableThing: React.Dispatch<React.SetStateAction<VariableThing<any> | null>>
 };
 
 export const StyledTreeItemRoot = styled(TreeItem)(({ theme }) => ({
@@ -91,9 +93,8 @@ const TopTreeItemRoot = styled(StyledTreeItemRoot)(({ theme }) => ({
     "borderBottom": "1px solid " + theme.palette.divider,
 }));
 
-    
+
 function TopTreeItem(props: StyledTreeItemProps) {
-    const fc: FontContextType = React.useContext(FontContext);
     const theme = useTheme();
     const {
         paint: Paint,
@@ -120,10 +121,11 @@ function TopTreeItem(props: StyledTreeItemProps) {
             nodeId={nodeId}
             key={nodeId}
             draggable={true}
-            onDragStart={ props.onDragStart }
+            onDragStart={props.onDragStart}
             label={
-                <DraggableLabel onNodeReOrder={ (ev, isBeforeDestinationNode) => {
-                    props.onNodeReOrder(ev, nodeId, isBeforeDestinationNode) }
+                <DraggableLabel onNodeReOrder={(ev, isBeforeDestinationNode) => {
+                    props.onNodeReOrder(ev, nodeId, isBeforeDestinationNode)
+                }
                 }>
                     <Box
                         sx={{
@@ -159,15 +161,15 @@ function TopTreeItem(props: StyledTreeItemProps) {
                                 }}>
                             </Box>
                         </Box>
-                        {renaming && fc.font ?
+                        {renaming && props.font ?
                             <Autocomplete
                                 options={[
                                     { id: SELF_GID, name: "<Self>", unicode: null },
-                                    ...fc.font!.glyphInfos()
+                                    ...props.font!.glyphInfos()
                                 ]}
                                 getOptionLabel={(option) => option.name}
                                 sx={{ fontWeight: 'inherit', flexGrow: 1 }}
-                                value={props.paint.gid ? fc.font!.glyphInfos()[props.paint.gid] : null}
+                                value={props.paint.gid ? props.font!.glyphInfos()[props.paint.gid] : null}
                                 renderInput={(params) => <TextField {...params} />}
                                 filterOptions={filterOptions}
                                 autoHighlight={true}
@@ -201,58 +203,78 @@ function TopTreeItem(props: StyledTreeItemProps) {
             }
             {...other}
         >
-            <FillItem nodeId={nodeId.toString() + ".fill"} paint={props.paint} redrawPaints={props.redrawPaints} />
-            <TransformItem nodeId={nodeId.toString() + ".transform"} paint={props.paint} redrawPaints={props.redrawPaints} />
+            <FillItem
+                nodeId={nodeId.toString() + ".fill"}
+                paint={props.paint}
+                redrawPaints={props.redrawPaints}
+                font={props.font}
+                selectVariableThing={props.selectVariableThing}
+            />
+            <TransformItem
+                nodeId={nodeId.toString() + ".transform"}
+                paint={props.paint}
+                redrawPaints={props.redrawPaints}
+                selectVariableThing={props.selectVariableThing}
+            />
         </TopTreeItemRoot>
     );
 }
 
+interface LayerTreeProps {
+    paintLayers: Paint[] | null,
+    selectedLayer: number | null,
+    selectLayer: React.Dispatch<React.SetStateAction<number | null>>,
+    font: PainterFont | null,
+    selectedGid: number | null,
+    setPaintLayers: (layers: Paint[]) => void,
+    clipboard: Paint[] | null,
+    setClipboard: React.Dispatch<React.SetStateAction<Paint[] | null>>,
+    selectVariableThing: React.Dispatch<React.SetStateAction<VariableThing<any> | null>>
+}
 
-export default function LayerTree() {
-    const fc: FontContextType = React.useContext(FontContext);
-
+export default function LayerTree(props: LayerTreeProps) {
     const [blendMode, setBlendMode] = React.useState<BlendMode>(BlendMode.Normal);
     const [dialogOpen, setDialogOpen] = React.useState(false);
-    let draggingId : number | null = null;
+    let draggingId: number | null = null;
 
     function nodeSelect(event: React.SyntheticEvent, nodeIds: Array<string> | string) {
         let selectedIndex = parseInt(nodeIds as string, 10);
-        if (fc.paintLayers) {
-            for (let i = 0; i < fc.paintLayers.length; i++) {
+        if (props.paintLayers) {
+            for (let i = 0; i < props.paintLayers.length; i++) {
                 if (i == selectedIndex) {
-                    fc.selectLayer(i);
-                    setBlendMode(fc.paintLayers[i].blendMode)
+                    props.selectLayer(i);
+                    setBlendMode(props.paintLayers[i].blendMode)
                 } else {
-                    fc.selectLayer(null);
+                    props.selectLayer(null);
                 }
             }
-            fc.selectLayer(selectedIndex)
+            props.selectLayer(selectedIndex)
         }
     }
 
     function changeBlendMode(event: SelectChangeEvent<BlendMode>) {
-        if (fc.selectedLayer !== null) {
-            fc.paintLayers![fc.selectedLayer].blendMode = event.target.value as BlendMode;
+        if (props.selectedLayer !== null) {
+            props.paintLayers![props.selectedLayer].blendMode = event.target.value as BlendMode;
             setBlendMode(event.target.value as BlendMode)
-            fc.setPaintLayers(([] as Paint[]).concat(fc.paintLayers!));
-            fc.selectLayer(fc.selectedLayer)
+            props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!));
+            props.selectLayer(props.selectedLayer)
         }
     }
 
     function handleDragReOrder(ev: React.DragEvent<HTMLDivElement>, nodeId: string, isBeforeDestinationNode: boolean) {
         if (draggingId === null) { return }
-        let paints = fc.paintLayers!;
+        let paints = props.paintLayers!;
         if (isBeforeDestinationNode) {
             paints.splice(parseInt(nodeId), 0, paints.splice(draggingId, 1)[0]);
         } else {
             paints.splice(parseInt(nodeId) + 1, 0, paints.splice(draggingId, 1)[0]);
         }
-        fc.setPaintLayers(([] as Paint[]).concat(paints));
+        props.setPaintLayers(([] as Paint[]).concat(paints));
     }
 
 
     return (
-        <Accordion sx={{ width: '100%' }} defaultExpanded={fc.font !== null} disabled={!fc.font}>
+        <Accordion sx={{ width: '100%' }} defaultExpanded={props.font !== null} disabled={!props.font}>
             <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
             >
@@ -271,7 +293,7 @@ export default function LayerTree() {
                             SelectDisplayProps={{ style: { paddingTop: 8, paddingBottom: 8 } }}
                             variant="standard"
                             disableUnderline={true}
-                            disabled={fc.selectedLayer === null}
+                            disabled={props.selectedLayer === null}
                             value={blendMode}
                             label="Blend Mode"
                             onChange={changeBlendMode}
@@ -303,21 +325,23 @@ export default function LayerTree() {
                     defaultExpandIcon={<ArrowRightIcon />}
                     defaultEndIcon={<div style={{ width: 24 }} />}
                     onNodeSelect={nodeSelect}
-                    selected={fc.selectedLayer?.toString() || ""}
+                    selected={props.selectedLayer?.toString() || ""}
                     sx={{ flexGrow: 1, overflowY: 'auto' }}
                 >
-                    {fc.paintLayers!.map((p: Paint, i: number) => <TopTreeItem
+                    {props.paintLayers!.map((p: Paint, i: number) => <TopTreeItem
                         nodeId={i.toString()}
-                        label={(fc.paintLayers!.length - i).toString()}
+                        label={(props.paintLayers!.length - i).toString()}
                         paint={p} redrawPaints={() => {
-                            fc.setPaintLayers(([] as Paint[]).concat(fc.paintLayers!));
+                            props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!));
                         }}
                         onDragStart={(ev) => {
                             draggingId = i;
                         }}
                         onNodeReOrder={handleDragReOrder}
-                        >
-                        
+                        font={props.font}
+                        selectVariableThing={props.selectVariableThing}
+                    >
+
                     </TopTreeItem>)}
                 </KeylessTreeView>
                 <Paper
@@ -329,12 +353,12 @@ export default function LayerTree() {
                 >
                     <Box>
                         <IconButton
-                            disabled={fc.selectedLayer === null || fc.paintLayers![fc.selectedLayer]?.locked}
+                            disabled={props.selectedLayer === null || props.paintLayers![props.selectedLayer]?.locked}
                             onClick={() => {
-                                if (fc.selectedLayer !== null) {
-                                    fc.paintLayers!.splice(fc.selectedLayer, 1);
-                                    fc.setPaintLayers(([] as Paint[]).concat(fc.paintLayers!));
-                                    fc.selectLayer(null);
+                                if (props.selectedLayer !== null) {
+                                    props.paintLayers!.splice(props.selectedLayer, 1);
+                                    props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!));
+                                    props.selectLayer(null);
                                 }
                             }}
                         >
@@ -344,17 +368,17 @@ export default function LayerTree() {
                         </IconButton>
                     </Box>
                     <Box sx={{ "flex": 1 }}>
-                        <IconButton disabled={!fc.font} onClick={
+                        <IconButton disabled={!props.font} onClick={
                             () => {
-                                fc.paintLayers!.splice(0, 0, new Paint(
+                                props.paintLayers!.splice(0, 0, new Paint(
                                     SELF_GID,
-                                    SolidBlackFill(fc.font!),
+                                    SolidBlackFill(props.font!),
                                     new Matrix(),
-                                    fc.font!,
-                                    fc.selectedGid!
+                                    props.font!,
+                                    props.selectedGid!
                                 ));
-                                fc.setPaintLayers(([] as Paint[]).concat(fc.paintLayers!));
-                                fc.selectLayer(0);
+                                props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!));
+                                props.selectLayer(0);
                             }
                         } >
                             <Tooltip title="Add new layer">
@@ -363,8 +387,8 @@ export default function LayerTree() {
                         </IconButton>
                     </Box>
                     <Box>
-                        <IconButton disabled={fc.paintLayers!.length === 0}
-                            onClick={() => fc.setClipboard(fc.paintLayers!.map(p => p.clone()))}
+                        <IconButton disabled={props.paintLayers!.length === 0}
+                            onClick={() => props.setClipboard(props.paintLayers!.map(p => p.clone()))}
                         >
                             <Tooltip title="Copy all layers to clipboard">
                                 <ContentCopy />
@@ -372,13 +396,13 @@ export default function LayerTree() {
                         </IconButton>
                     </Box>
                     <Box>
-                        <IconButton disabled={!fc.clipboard || !fc.font || !fc.selectedGid}
+                        <IconButton disabled={!props.clipboard || !props.font || !props.selectedGid}
                             onClick={() => {
-                                let clonedFromClipboard = fc.clipboard!.map(p => p.clone())
-                                fc.font!.paints.set(fc.selectedGid!, clonedFromClipboard)
-                                fc.setPaintLayers(clonedFromClipboard)
-                                fc.font!.updatePalette();
-                                fc.selectLayer(null);
+                                let clonedFromClipboard = props.clipboard!.map(p => p.clone())
+                                props.font!.paints.set(props.selectedGid!, clonedFromClipboard)
+                                props.setPaintLayers(clonedFromClipboard)
+                                props.font!.updatePalette();
+                                props.selectLayer(null);
                             }}
                         >
                             <Tooltip title="Paste all layers from clipboard">
@@ -387,14 +411,21 @@ export default function LayerTree() {
                         </IconButton>
                     </Box>
                     <Box>
-                        <IconButton disabled={!fc.clipboard || !fc.font || !fc.selectedGid}
+                        <IconButton disabled={!props.clipboard || !props.font || !props.selectedGid}
                             onClick={() => setDialogOpen(true)}
                         >
                             <Tooltip title="Paste all layers to all glyphs">
                                 <ContentPasteGoTwoTone />
                             </Tooltip>
                         </IconButton>
-                        <ConfirmPasteAllDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
+                        <ConfirmPasteAllDialog
+                            open={dialogOpen}
+                            onClose={() => setDialogOpen(false)}
+                            font={props.font}
+                            clipboard={props.clipboard!}
+                            selectLayer={props.selectLayer}
+                        />
+
                     </Box>
 
                 </Paper>

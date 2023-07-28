@@ -12,7 +12,8 @@ import { styled } from '@mui/material/styles';
 const Highlight = React.lazy(() => import('react-highlight'));
 
 import "./Developer.css";
-import { FontContext, FontContextType } from "./App";
+import { Paint } from './color/Paints';
+import { PainterFont } from './font/Font';
 
 const style = {
     position: 'absolute' as 'absolute',
@@ -35,14 +36,19 @@ const SimpleButton = styled(Button)({
     textTransform: 'none',
 })
 
-export function Developer() {
+interface DeveloperProps {
+    paintLayers: Paint[],
+    selectedLayer: number | null,
+    font: PainterFont | null,
+};
+
+export function Developer(props: DeveloperProps) {
     const [open, setOpen] = React.useState<boolean>(false);
     const [content, setContent] = React.useState<any>(null);
-    const fc: FontContextType = React.useContext(FontContext);
 
 
     let dumpLayer = () => {
-        setContent(JSON.stringify(fc.paintLayers![fc.selectedLayer!], (key, value) => {
+        setContent(JSON.stringify(props.paintLayers![props.selectedLayer!], (key, value) => {
             if (key.startsWith("_") || key === "matrix") {
                 return "[omitted]"
             } else {
@@ -54,11 +60,11 @@ export function Developer() {
 
     let dumpMatrix = () => {
         let positions: Record<string, string> = {}
-        let matrix = fc.paintLayers![fc.selectedLayer!].matrix
+        let matrix = props.paintLayers![props.selectedLayer!].matrix
         for (var [k, v] of Array.from(matrix.values.entries())) {
             positions[k] = v.toString()
         }
-        let loc = fc.font!.normalizedLocation;
+        let loc = props.font!.normalizedLocation;
         let key = Object.keys(loc)
             .sort()
             .map((k) => `${k}:${loc[k]}`)
@@ -69,13 +75,13 @@ export function Developer() {
     }
 
     let dumpCompilation = () => {
-        let [colr, cpal] = fc.font!.saveColr()
+        let [colr, cpal] = props.font!.saveColr()
         setContent(JSON.stringify(colr, undefined, 4))
         setOpen(true);
     }
 
     let dumpForSaving = () => {
-        let dump = fc.font!.deflate();
+        let dump = props.font!.deflate();
         setContent(dump);
         setOpen(true);
     }
@@ -89,8 +95,8 @@ export function Developer() {
             </AccordionSummary>
             <AccordionDetails>
                 <Stack direction="column" spacing={2}>
-                    <SimpleButton variant="outlined" disabled={fc.selectedLayer === null} onClick={dumpLayer}>Dump current paint layer</SimpleButton>
-                    <SimpleButton variant="outlined" disabled={fc.selectedLayer === null} onClick={dumpMatrix}>Dump current variable matrix</SimpleButton>
+                    <SimpleButton variant="outlined" disabled={props.selectedLayer === null} onClick={dumpLayer}>Dump current paint layer</SimpleButton>
+                    <SimpleButton variant="outlined" disabled={props.selectedLayer === null} onClick={dumpMatrix}>Dump current variable matrix</SimpleButton>
                     <SimpleButton variant="outlined" onClick={dumpCompilation}>Compile font to OT</SimpleButton>
                     <SimpleButton variant="outlined" onClick={dumpForSaving}>Compile font to Pntr project</SimpleButton>
 

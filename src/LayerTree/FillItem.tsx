@@ -13,24 +13,26 @@ import { SolidFill } from "../color/SolidFill";
 import { GradientFill } from '../color/Paints';
 import ColorPicker, { useColorPicker } from 'react-best-gradient-color-picker';
 import MultipleStop from '@mui/icons-material/MultipleStop';
-import { FontContext, FontContextType } from "../App";
 import { StyledTreeItemRoot } from './LayerTree';
+import { PainterFont } from '../font/Font';
+import { VariableThing } from '../font/VariableScalar';
 
 
 type FillItemProps = TreeItemProps & {
     nodeId: String;
     paint: Paint;
+    font: PainterFont | null;
     redrawPaints: () => void;
+    selectVariableThing: React.Dispatch<React.SetStateAction<VariableThing<any> | null>>
 };
 
 function SolidFillOpacitySlider(props: FillItemProps) {
-    const fc: FontContextType = React.useContext(FontContext);
     let fill = props.paint.fill as SolidFill;
     let opacity_pc = fill.current_opacity * 100;
     const [opacity, setOpacity] = React.useState<number>(opacity_pc);
 
     React.useEffect(() => {
-        fill.opacity.addValue(fc.font!.normalizedLocation, opacity / 100);
+        fill.opacity.addValue(props.font!.normalizedLocation, opacity / 100);
         props.redrawPaints();
     }, [opacity]);
 
@@ -65,7 +67,7 @@ function SolidFillOpacitySlider(props: FillItemProps) {
                 type: 'number',
             }} />
         <Box>
-            <IconButton onClick={() => fc.selectVariableThing(fill.opacity)}>
+            <IconButton onClick={() => props.selectVariableThing(fill.opacity)}>
                 <Tooltip title="Edit variable">
                     <MultipleStop />
                 </Tooltip>
@@ -75,9 +77,8 @@ function SolidFillOpacitySlider(props: FillItemProps) {
 }
 
 function GradientFillOpacitySliders(props: FillItemProps) {
-    const fc: FontContextType = React.useContext(FontContext);
     let fill: GradientFill = props.paint.fill as GradientFill;
-    let opacities: number[] = fill.stops.map((stop) => 100 * stop.opacity.valueAt(fc.font!.normalizedLocation));
+    let opacities: number[] = fill.stops.map((stop) => 100 * stop.opacity.valueAt(props.font!.normalizedLocation));
     const [gradientFillOpacity, setGradientFillOpacity] = React.useState<number[]>(opacities);
 
     return <>
@@ -104,7 +105,7 @@ function GradientFillOpacitySliders(props: FillItemProps) {
                                 newOpacities[stopIndex] = newOpacity / 100;
                                 return newOpacities;
                             });
-                            fill.stops[stopIndex].opacity.addValue(fc.font!.normalizedLocation, newOpacity / 100);
+                            fill.stops[stopIndex].opacity.addValue(props.font!.normalizedLocation, newOpacity / 100);
                             props.redrawPaints();
                         }}
                         aria-labelledby="input-slider"
@@ -120,7 +121,7 @@ function GradientFillOpacitySliders(props: FillItemProps) {
                                 newOpacities[stopIndex] = newOpacity / 100;
                                 return newOpacities;
                             });
-                            stop.opacity.addValue(fc.font!.normalizedLocation, newOpacity / 100);
+                            stop.opacity.addValue(props.font!.normalizedLocation, newOpacity / 100);
                             console.log(stop.opacity);
                             props.redrawPaints();
                         }}
@@ -130,7 +131,7 @@ function GradientFillOpacitySliders(props: FillItemProps) {
                             type: 'number',
                         }} />
                     <Box>
-                        <IconButton onClick={() => fc.selectVariableThing(stop.opacity)}>
+                        <IconButton onClick={() => props.selectVariableThing(stop.opacity)}>
                             <Tooltip title="Edit variable">
                                 <MultipleStop />
                             </Tooltip>
@@ -142,7 +143,6 @@ function GradientFillOpacitySliders(props: FillItemProps) {
 }
 
 export function FillItem(props: FillItemProps) {
-    const fc: FontContextType = React.useContext(FontContext);
     const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
         setAnchorEl(event.currentTarget);
@@ -155,13 +155,13 @@ export function FillItem(props: FillItemProps) {
     const { getGradientObject } = useColorPicker(paintColor, setPaintColor);
 
     let palette: Record<string, string> = {};
-    for (var colorString of fc.font!.palette.colors || []) {
+    for (var colorString of props.font!.palette.colors || []) {
         palette[colorString] = colorString;
     }
 
     React.useEffect(() => {
         props.paint.setFill(getGradientObject());
-        fc.font!.updatePalette();
+        props.font!.updatePalette();
         props.redrawPaints();
     }, [paintColor]);
 

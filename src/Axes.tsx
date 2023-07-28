@@ -1,4 +1,4 @@
-import { Axis } from './font/Font';
+import { Axis, PainterFont } from './font/Font';
 import * as React from 'react';
 import Typography from '@mui/material/Typography';
 import Slider from '@mui/material/Slider';
@@ -12,20 +12,23 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { styled } from '@mui/material/styles';
-import { FontContext, FontContextType } from "./App";
+import { VariableThing } from './font/VariableScalar';
 
 
 interface AxesProps {
+    font: PainterFont | null,
+    selectedVariableThing: VariableThing<any> | null,
     refresh: () => void
 }
 
 interface AxisSliderProps {
-    axis: Axis
+    font: PainterFont | null,
+    axis: Axis,
+    selectedVariableThing: VariableThing<any> | null,
     refresh: () => void
 }
 
 function AxisSlider(props: AxisSliderProps) {
-    const fc: FontContextType = React.useContext(FontContext);
     let range = Math.abs(props.axis.max - props.axis.min);
     let snap = 0.02
     const [value, setValue] = React.useState(props.axis.default);
@@ -34,8 +37,8 @@ function AxisSlider(props: AxisSliderProps) {
         { value: props.axis.default },
         { value: props.axis.max },
     ]
-    if (fc.selectedVariableThing) {
-        for (var loc of fc.selectedVariableThing.locations(props.axis)) {
+    if (props.selectedVariableThing) {
+        for (var loc of props.selectedVariableThing.locations(props.axis)) {
             marks.push({ value: loc })
         }
 
@@ -53,8 +56,8 @@ function AxisSlider(props: AxisSliderProps) {
                 }
             }
             setValue(v)
-            fc.font!.variations[props.axis.tag] = v as number;
-            fc.font?.setVariations();
+            props.font!.variations[props.axis.tag] = v as number;
+            props.font!.setVariations();
             props.refresh();
         }}
         aria-labelledby="continuous-slider" />
@@ -77,8 +80,7 @@ const StyledAxisSlider = styled(AxisSlider)(({ theme }) => ({
 
 
 export function Axes(props: AxesProps) {
-    const fc: FontContextType = React.useContext(FontContext);
-    let axes: Record<string, Axis> | undefined = fc.font?.axes;
+    let axes: Record<string, Axis> | undefined = props.font?.axes;
     if (!axes || Object.keys(axes).length == 0) {
         return null;
     }
@@ -105,9 +107,9 @@ export function Axes(props: AxesProps) {
                                 <TableRow key={name}>
                                     <TableCell>{name}</TableCell>
                                     <TableCell>
-                                        <StyledAxisSlider axis={axis} refresh={props.refresh} />
+                                        <StyledAxisSlider axis={axis} {...props} />
                                     </TableCell>
-                                    <TableCell>{fc.font?.variations[name]}</TableCell>
+                                    <TableCell>{props.font?.variations[name]}</TableCell>
                                 </TableRow>
                             );
                         })}

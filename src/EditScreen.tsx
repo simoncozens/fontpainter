@@ -4,7 +4,6 @@ import { Paint } from './color/Paints';
 import * as SVG from "@svgdotjs/svg.js";
 import useMediaQuery from '@mui/material/useMediaQuery';
 import '@svgdotjs/svg.panzoom.js'
-import { FontContext, FontContextType } from "./App";
 import { IconButton, ToggleButton, ToggleButtonGroup, Toolbar } from '@mui/material';
 import { AdsClick, PanTool } from '@mui/icons-material';
 
@@ -19,8 +18,17 @@ function deleteAllChildren(e: any) {
 const normalizeEvent = (ev:any) =>
   ev.touches || [{ clientX: ev.clientX, clientY: ev.clientY }];
 
-export default function EditScreen() {
-    const fc: FontContextType = React.useContext(FontContext);
+interface EditScreenProps {
+    font: PainterFont | null,
+    paintLayers: Paint[],
+    setPaintLayers: (layers: Paint[]) => void,
+    selectedGid: number | null,
+    selectedLayer: number | null,
+    viewbox: React.MutableRefObject<SVG.Box | null> | null,
+    selectLayer: React.Dispatch<React.SetStateAction<number | null>>,
+};
+
+export default function EditScreen(props: EditScreenProps) {
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
     const backgroundColor = React.useMemo(
       () => prefersDarkMode ? '#AAA' : 'white',
@@ -38,19 +46,19 @@ export default function EditScreen() {
     let svgEl: SVG.Svg | null = null;
 
     const svg = React.useRef(document.createElement("div"));
-    if (fc.font && fc.paintLayers.length > 0 && fc.selectedGid != null) {
-        svgEl = fc.font.renderPaints(fc.paintLayers, fc.selectedGid);
-        if (fc.selectedLayer != null && mode == "select") {
-            fc.paintLayers[fc.selectedLayer].onSelected();
+    if (props.font && props.paintLayers.length > 0 && props.selectedGid != null) {
+        svgEl = props.font.renderPaints(props.paintLayers, props.selectedGid);
+        if (props.selectedLayer != null && mode == "select") {
+            props.paintLayers[props.selectedLayer].onSelected();
         }
-        fc.paintLayers.forEach((layer: Paint, index: number) => {
+        props.paintLayers.forEach((layer: Paint, index: number) => {
             if (mode == "select") {
                 layer._rendering.on("click", () => {
-                    fc.selectLayer(index);
+                    props.selectLayer(index);
                 })
             }
             layer._rendering.on("refreshtree", () => {
-                fc.setPaintLayers([...fc.paintLayers]);
+                props.setPaintLayers([...props.paintLayers]);
             })
         })
         deleteAllChildren(svg.current);
@@ -60,8 +68,8 @@ export default function EditScreen() {
         svgEl.rect(1000, 1000).fill('url(#grid)').back()
         svgEl.width(1000);
         svgEl.height(1000).viewbox('0 0 1000 1000')
-        if (fc.viewbox!.current! != null) {
-            svgEl.viewbox(fc.viewbox!.current!);
+        if (props.viewbox!.current! != null) {
+            svgEl.viewbox(props.viewbox!.current!);
         }
         svgEl.panZoom({
             zoomFactor: 0.5,
@@ -72,12 +80,12 @@ export default function EditScreen() {
         svgEl.on("zoom", (evt: any) => {
             svgEl!.zoom(evt.detail.level, evt.detail.focus);
             let vb = svgEl!.viewbox();
-            fc.viewbox!.current! = svgEl!.viewbox()
+            props.viewbox!.current! = svgEl!.viewbox()
         })
         if (mode == "pan") {
             var dx = 0; var dy = 0;
             svgEl.on("panEnd", (evt: any) => {
-                fc.viewbox!.current! = svgEl!.viewbox()
+                props.viewbox!.current! = svgEl!.viewbox()
                 evt.preventDefault();
             });
         }
@@ -97,7 +105,7 @@ export default function EditScreen() {
             
         </Toolbar>
         <div className="svgwrapper" style={{backgroundColor }}>
-            <div ref={svg} className="svgbox" onClick={() => fc.selectLayer(null)} />
+                <div ref={svg} className="svgbox" onClick={() => props.selectLayer(null)} />
         </div>
         </>
     );

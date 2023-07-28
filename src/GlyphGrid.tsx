@@ -1,4 +1,3 @@
-import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import { DataGrid, GridRowsProp, GridColDef, GridValueFormatterParams } from '@mui/x-data-grid';
 import Accordion from '@mui/material/Accordion';
@@ -6,11 +5,14 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import * as React from 'react';
-import { FontContext, FontContextType } from "./App";
+import { PainterFont } from './font/Font';
 
+interface GlyphGridProps {
+    font: PainterFont | null,
+    selectGid: React.Dispatch<React.SetStateAction<number | null>>
+}
 
-export function GlyphGrid() {
-    const fc: FontContextType = React.useContext(FontContext);
+export function GlyphGrid(props: GlyphGridProps) {
     const columns: GridColDef[] = [
         { field: 'id', headerName: 'GID', width: 10 },
         { field: 'name', headerName: 'Name', flex: 1 },
@@ -24,12 +26,12 @@ export function GlyphGrid() {
         },
     ];
     var rows: GridRowsProp = [];
-    if (fc.font) {
-        rows = fc.font.glyphInfos() as unknown as GridRowsProp[];
+    if (props.font) {
+        rows = props.font.glyphInfos() as unknown as GridRowsProp[];
     }
     return (
-        <Accordion sx={{ width: '100%' }} disabled={!fc.font}
-            defaultExpanded={fc.font != null}> 
+        <Accordion sx={{ width: '100%' }} disabled={!props.font}
+            defaultExpanded={props.font != null}> 
             <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
             >
@@ -42,7 +44,7 @@ export function GlyphGrid() {
                 hideFooterSelectedRowCount={true}
                 style={{height: 300 }}
                 onRowClick={(params, event, details) => {
-                    fc.selectGid(params.row.id);
+                    props.selectGid(params.row.id);
                 }}
             />
             </AccordionDetails>

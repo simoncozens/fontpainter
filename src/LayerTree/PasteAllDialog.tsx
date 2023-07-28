@@ -5,26 +5,30 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import { FontContext, FontContextType } from "../App";
+import { PainterFont } from '../font/Font';
+import { Paint } from '../color/Paints';
 
 
 
 export interface ConfirmDialogProps {
     open: boolean;
     onClose: () => void;
+    font: PainterFont | null;
+    clipboard: Paint[];
+    selectLayer: React.Dispatch<React.SetStateAction<number | null>>;
 }
+
 export function ConfirmPasteAllDialog(props: ConfirmDialogProps) {
     const { onClose, open } = props;
-    const fc: FontContextType = React.useContext(FontContext);
     const handleOk = () => {
         let gid = 0;
-        while (gid < fc.font!.numGlyphs) {
-            let clonedFromClipboard = fc.clipboard!.map(p => p.clone());
-            fc.font!.paints.set(gid, clonedFromClipboard);
+        while (gid < props.font!.numGlyphs) {
+            let clonedFromClipboard = props.clipboard!.map(p => p.clone());
+            props.font!.paints.set(gid, clonedFromClipboard);
             gid += 1;
         }
-        fc.font!.updatePalette();
-        fc.selectLayer(null);
+        props.font!.updatePalette();
+        props.selectLayer(null);
         onClose();
     };
 

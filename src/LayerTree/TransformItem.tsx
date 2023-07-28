@@ -6,18 +6,19 @@ import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import { Paint } from '../color/Paints';
 import MultipleStop from '@mui/icons-material/MultipleStop';
-import { FontContext, FontContextType } from "../App";
 import { StyledTreeItemRoot } from './LayerTree';
+import { VariableThing } from '../font/VariableScalar';
 
 type TransformItemProps = TreeItemProps & {
     nodeId: String;
     paint: Paint;
     redrawPaints: () => void;
+    selectVariableThing: React.Dispatch<React.SetStateAction<VariableThing<any> | null>>
 };
+
 export function TransformItem(props: TransformItemProps) {
-    const fc: FontContextType = React.useContext(FontContext);
     let handleClick = () => {
-        fc.selectVariableThing(props.paint.matrix);
+        props.selectVariableThing(props.paint.matrix);
     };
 
     return <StyledTreeItemRoot nodeId={props.nodeId}
