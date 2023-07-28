@@ -36,12 +36,13 @@ export default function App() {
   const [selectedGid, selectGid] = useState<number | null>(null);
   const [selectedLayer, selectLayer] = useState<number | null>(null);
   const [selectedVariableThing, selectVariableThing] = useState<VariableThing<any> | null>(null);
-  const [paintLayers, setPaintLayers, { undo, redo, canUndo, canRedo }] = useUndoableState([]);
+  const [paintLayers, setPaintLayers, { undo, redo, canUndo, canRedo, clearHistory }] = useUndoableState([]);
   const [clipboard, setClipboard] = useState<Paint[] | null>(null);
   function doSelectGid(gid: React.SetStateAction<number | null>) {
     if (font && gid) {
       setPaintLayers(font.getPaintLayers(gid as number));
       selectLayer(null);
+      clearHistory();
       selectGid(gid);
     }
   }

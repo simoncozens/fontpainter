@@ -31,6 +31,7 @@ export function useUndoableState(
             redo: (font: PainterFont) => boolean,
             canUndo: () => boolean,
             canRedo: () => boolean,
+            clearHistory: () => void,
         }
     ] {
     let [state, _setState] = useState<UndoableState>({
@@ -91,6 +92,14 @@ export function useUndoableState(
         return true;
     };
 
+    let clearHistory = () => {
+        _setState({
+            past: [],
+            present: state.present,
+            future: []
+        })
+    }
+
     const canUndo = () => state.past.length > 0;
     const canRedo = () => state.future.length > 0;
 
@@ -98,7 +107,7 @@ export function useUndoableState(
         state.present,
         setState,
         {
-            undo, redo, canUndo, canRedo
+            undo, redo, canUndo, canRedo, clearHistory
         }
     ]
 
