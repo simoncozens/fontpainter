@@ -36,7 +36,7 @@ export default function App() {
   const [selectedGid, selectGid] = useState<number | null>(null);
   const [selectedLayer, selectLayer] = useState<number | null>(null);
   const [selectedVariableThing, selectVariableThing] = useState<VariableThing<any> | null>(null);
-  const [paintLayers, setPaintLayers, { undo, redo, canUndo, canRedo, clearHistory }] = useUndoableState([]);
+  const [paintLayers, setPaintLayers, { undo, redo, canUndo, canRedo, clearHistory, beginUndo }] = useUndoableState([]);
   const [clipboard, setClipboard] = useState<Paint[] | null>(null);
   function doSelectGid(gid: React.SetStateAction<number | null>) {
     if (font && gid) {
@@ -46,7 +46,10 @@ export default function App() {
       selectGid(gid);
     }
   }
-  let wrappedSetPaintLayers = (layers: Paint[]) => {
+  let wrappedSetPaintLayers = (layers: Paint[], doSnapshot: boolean) => {
+    if (doSnapshot) {
+      beginUndo();
+    }
     setPaintLayers(layers);
     if (font && selectedGid) {
       font.paints.set(selectedGid, layers);
@@ -75,6 +78,7 @@ export default function App() {
               font={font}
               paintLayers={paintLayers}
               setPaintLayers={setPaintLayers}
+              beginUndo={beginUndo}
               selectedLayer={selectedLayer}
               selectLayer={selectLayer}
               clipboard={clipboard}
@@ -91,6 +95,7 @@ export default function App() {
             <EditScreen font={font}
               paintLayers={paintLayers}
               setPaintLayers={setPaintLayers}
+              beginUndo={beginUndo}
               selectedGid={selectedGid}
               viewbox={viewbox}
               selectLayer={selectLayer}

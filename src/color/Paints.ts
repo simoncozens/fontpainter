@@ -312,6 +312,7 @@ export class Paint {
         let startWidth: number;
         let startHeight: number;
         wireframe.on("dragstart", (e: any) => {
+            this._rendering.fire("beginUndo");
             startX = e.detail.box.x
             startY = e.detail.box.y
         })
@@ -340,6 +341,7 @@ export class Paint {
         })
         wireframe.on("resizestart", (e: any) => {
             console.log("Resize start")
+            this._rendering.fire("beginUndo");
             startX = wireframe.bbox().x
             startY = wireframe.bbox().y
             startWidth = wireframe.bbox().width

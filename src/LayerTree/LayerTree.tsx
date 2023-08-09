@@ -225,9 +225,10 @@ interface LayerTreeProps {
     paintLayers: Paint[] | null,
     selectedLayer: number | null,
     selectLayer: React.Dispatch<React.SetStateAction<number | null>>,
+    beginUndo: () => void,
     font: PainterFont | null,
     selectedGid: number | null,
-    setPaintLayers: (layers: Paint[]) => void,
+    setPaintLayers: (layers: Paint[], doSnapshot: boolean) => void,
     clipboard: Paint[] | null,
     setClipboard: React.Dispatch<React.SetStateAction<Paint[] | null>>,
     selectVariableThing: React.Dispatch<React.SetStateAction<VariableThing<any> | null>>
@@ -255,22 +256,24 @@ export default function LayerTree(props: LayerTreeProps) {
 
     function changeBlendMode(event: SelectChangeEvent<BlendMode>) {
         if (props.selectedLayer !== null) {
+            props.beginUndo();
             props.paintLayers![props.selectedLayer].blendMode = event.target.value as BlendMode;
             setBlendMode(event.target.value as BlendMode)
-            props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!));
+            props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!), false);
             props.selectLayer(props.selectedLayer)
         }
     }
 
     function handleDragReOrder(ev: React.DragEvent<HTMLDivElement>, nodeId: string, isBeforeDestinationNode: boolean) {
         if (draggingId === null) { return }
+        props.beginUndo();
         let paints = props.paintLayers!;
         if (isBeforeDestinationNode) {
             paints.splice(parseInt(nodeId), 0, paints.splice(draggingId, 1)[0]);
         } else {
             paints.splice(parseInt(nodeId) + 1, 0, paints.splice(draggingId, 1)[0]);
         }
-        props.setPaintLayers(([] as Paint[]).concat(paints));
+        props.setPaintLayers(([] as Paint[]).concat(paints), false);
     }
 
 
@@ -332,8 +335,9 @@ export default function LayerTree(props: LayerTreeProps) {
                     {props.paintLayers!.map((p: Paint, i: number) => <TopTreeItem
                         nodeId={i.toString()}
                         label={(props.paintLayers!.length - i).toString()}
-                        paint={p} redrawPaints={() => {
-                            props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!));
+                        paint={p}
+                        redrawPaints={() => {
+                            props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!), true);
                         }}
                         onDragStart={(ev) => {
                             draggingId = i;
@@ -357,8 +361,9 @@ export default function LayerTree(props: LayerTreeProps) {
                             disabled={props.selectedLayer === null || props.paintLayers![props.selectedLayer]?.locked}
                             onClick={() => {
                                 if (props.selectedLayer !== null) {
+                                    props.beginUndo();
                                     props.paintLayers!.splice(props.selectedLayer, 1);
-                                    props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!));
+                                    props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!), false);
                                     props.selectLayer(null);
                                 }
                             }}
@@ -371,6 +376,7 @@ export default function LayerTree(props: LayerTreeProps) {
                     <Box sx={{ "flex": 1 }}>
                         <IconButton disabled={!props.font} onClick={
                             () => {
+                                props.beginUndo();
                                 props.paintLayers!.splice(0, 0, new Paint(
                                     SELF_GID,
                                     SolidBlackFill(props.font!),
@@ -378,7 +384,7 @@ export default function LayerTree(props: LayerTreeProps) {
                                     props.font!,
                                     props.selectedGid!
                                 ));
-                                props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!));
+                                props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!), false);
                                 props.selectLayer(0);
                             }
                         } >
@@ -399,9 +405,10 @@ export default function LayerTree(props: LayerTreeProps) {
                     <Box>
                         <IconButton disabled={!props.clipboard || !props.font || !props.selectedGid}
                             onClick={() => {
+                                props.beginUndo();
                                 let clonedFromClipboard = props.clipboard!.map(p => p.clone())
                                 props.font!.paints.set(props.selectedGid!, clonedFromClipboard)
-                                props.setPaintLayers(clonedFromClipboard)
+                                props.setPaintLayers(clonedFromClipboard, false);
                                 props.font!.updatePalette();
                                 props.selectLayer(null);
                             }}

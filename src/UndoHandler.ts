@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Paint } from "./color/Paints";
 import { PainterFont } from './font/Font';
 
@@ -32,30 +32,33 @@ export function useUndoableState(
             canUndo: () => boolean,
             canRedo: () => boolean,
             clearHistory: () => void,
+            beginUndo: () => void
         }
     ] {
     let [state, _setState] = useState<UndoableState>({
         past: [],
         present: initialState,
-        future: []
+        future: [],
     });
 
+    let deflateState = () => {
+        return JSON.stringify({
+            past: state.past,
+            present: deflate(state.present),
+            future: state.future,
+        }, null, 4)
+    }
+
+    let beginUndo = () => {
+        state.past.push(deflate(state.present));
+    };
+
     let setState = (newState: Paint[]) => {
-        // Deflate the current state and place onto undo stack
-        let deflated = deflate(state.present);
-        let newPast = state.past;
-        if (deflated !== state.past[state.past.length - 1]) {
-            newPast = [...state.past, deflated];
-            if (newPast.length > 100) {
-                newPast.shift();
-            }
-        }
         _setState({
-            past: newPast,
+            past: [...state.past],
             present: newState,
-            future: [...state.future]
+            future: [...state.future],
         })
-        console.log("New state:", state);
     };
 
     let undo = (font: PainterFont): boolean => {
@@ -96,7 +99,7 @@ export function useUndoableState(
         _setState({
             past: [],
             present: state.present,
-            future: []
+            future: [],
         })
     }
 
@@ -107,7 +110,7 @@ export function useUndoableState(
         state.present,
         setState,
         {
-            undo, redo, canUndo, canRedo, clearHistory
+            undo, redo, canUndo, canRedo, clearHistory, beginUndo
         }
     ]
 

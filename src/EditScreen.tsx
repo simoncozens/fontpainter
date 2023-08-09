@@ -26,6 +26,7 @@ interface EditScreenProps {
     selectedLayer: number | null,
     viewbox: React.MutableRefObject<SVG.Box | null> | null,
     selectLayer: React.Dispatch<React.SetStateAction<number | null>>,
+    beginUndo: () => void,
 };
 
 export default function EditScreen(props: EditScreenProps) {
@@ -60,6 +61,7 @@ export default function EditScreen(props: EditScreenProps) {
             layer._rendering.on("refreshtree", () => {
                 props.setPaintLayers([...props.paintLayers]);
             })
+            layer._rendering.on("beginUndo", props.beginUndo);
         })
         deleteAllChildren(svg.current);
         // Add a grid
