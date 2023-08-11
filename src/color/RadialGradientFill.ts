@@ -230,9 +230,9 @@ export class RadialGradientFill {
         end.draggable(true);
         end.css({ "cursor": "grab" });
         start_radius_handle.draggable(true);
-        start_radius_handle.css({ "cursor": "grab" });
+        start_radius_handle.css({ "cursor": "row-resize" });
         end_radius_handle.draggable(true);
-        end_radius_handle.css({ "cursor": "grab" });
+        end_radius_handle.css({ "cursor": "row-resize" });
         start.on("dragend", (e: any) => {
             rendering.fire("refreshtree");
         });
