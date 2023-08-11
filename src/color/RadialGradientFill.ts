@@ -188,9 +188,14 @@ export class RadialGradientFill {
         for (var stop of this.stops) {
             colorline[stop.offset] = stop.color;
         }
+        let start_circle = wireframe.circle(this.current_radius0 * 2).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0, "fill": colorline[0], "fill-opacity": 0.2 });
+        let end_circle = wireframe.circle(this.current_radius1 * 2).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x1, "cy": this.current_y1, "fill": colorline[100], "fill-opacity": 0.2 });
+        let start_radius_handle = wireframe.circle(10).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0 + this.current_radius0, "fill": "white" });
+        let end_radius_handle = wireframe.circle(10).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x1, "cy": this.current_y1 + this.current_radius1, "fill": "white" });
+
         let start = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0, "fill": colorline[0] || "black" });
-        let end = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0 + this.current_radius1, "fill": colorline[100] || "black" });
-        wireframe.circle(this.current_radius1 * 2).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0, "fill": "none" });
+        let end = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x1, "cy": this.current_y1, "fill": colorline[100] || "black" });
+
         let line = wireframe.line(start.cx(), start.cy(), end.cx(), end.cy()).attr({ "stroke": "black", "stroke-width": 0.5 }).id("wireframe-line");
         let balls = wireframe.group();
         let makeballs = () => {
@@ -224,10 +229,20 @@ export class RadialGradientFill {
         start.css({ "cursor": "grab" });
         end.draggable(true);
         end.css({ "cursor": "grab" });
+        start_radius_handle.draggable(true);
+        start_radius_handle.css({ "cursor": "grab" });
+        end_radius_handle.draggable(true);
+        end_radius_handle.css({ "cursor": "grab" });
         start.on("dragend", (e: any) => {
             rendering.fire("refreshtree");
         });
         end.on("dragend", (e: any) => {
+            rendering.fire("refreshtree");
+        });
+        start_radius_handle.on("dragend", (e: any) => {
+            rendering.fire("refreshtree");
+        });
+        end_radius_handle.on("dragend", (e: any) => {
             rendering.fire("refreshtree");
         });
         start.on("dragmove", (e: any) => {
@@ -237,7 +252,9 @@ export class RadialGradientFill {
             if (this._element) {
                 this._element.from(this.current_x0, this.current_y0);
             }
+            start_circle.center(this.current_x0, this.current_y0);
             line.plot(start.cx(), start.cy(), end.cx(), end.cy());
+            start_radius_handle.center(this.current_x0, this.current_y0 + this.current_radius0);
         });
         end.on("dragmove", (e: any) => {
             this.x1.addValue(this._font.normalizedLocation, e.detail.box.x);
@@ -246,9 +263,31 @@ export class RadialGradientFill {
             if (this._element) {
                 this._element.to(this.current_x1, this.current_y1);
             }
+            end_circle.center(this.current_x1, this.current_y1);
             line.plot(start.cx(), start.cy(), end.cx(), end.cy());
+            end_radius_handle.center(this.current_x1, this.current_y1 + this.current_radius1);
+        });
+        start_radius_handle.on("dragmove", (e: any) => {
+            let dist = Math.sqrt(Math.pow(e.detail.box.x - this.current_x0, 2) + Math.pow(e.detail.box.y - this.current_y0, 2));
+            this.radius0.addValue(this._font.normalizedLocation, dist);
+            updateBalls();
+            start_circle.radius(this.current_radius0);
+            if (this._element) {
+                this._element.attr({ "fr": this.current_radius0 })
+            }
 
         });
+        end_radius_handle.on("dragmove", (e: any) => {
+            let dist = Math.sqrt(Math.pow(e.detail.box.x - this.current_x1, 2) + Math.pow(e.detail.box.y - this.current_y1, 2));
+            this.radius1.addValue(this._font.normalizedLocation, dist);
+            updateBalls();
+            end_circle.radius(this.current_radius1);
+            if (this._element) {
+                this._element.radius(this.current_radius1);
+            }
+
+        });
+
     }
 
     onDeselected(rendering: SVG.G) {

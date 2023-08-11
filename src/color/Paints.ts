@@ -188,10 +188,11 @@ export class Paint {
             newfill = new RadialGradientFill([],
                 bbox.cx,  // cx
                 bbox.cy,  // cy
-                0, // r0
-                bbox.cx,  // fx
-                bbox.cy,  // fy
-                Math.max(bbox.height, bbox.width) / 2,  // r1
+                20, // r0
+                bbox.cx + 100,  // fx
+                bbox.cy + 100,  // fy
+                // Math.max(bbox.height, bbox.width) / 2,  // r1
+                30, // r1
                 this._font)
         }
         newfill.stops = newcolor.colors.map((c) => new GradientStop(c.value, c.left!, 1.0, this._font))
