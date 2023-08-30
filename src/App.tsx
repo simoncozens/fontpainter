@@ -41,8 +41,8 @@ export default function App() {
   const [paintLayerHistory, setPaintLayerHistory, { 
       canUndo,
       canRedo,
-      undo,
-      redo,
+      undo: _undo,
+      redo: _redo,
       reset: clearHistory,
       past,
       future
@@ -55,27 +55,48 @@ export default function App() {
   }
   let setPaintLayers = (layers: Paint[]) => {
     let deflated = deflate(layers);
-    // console.log("Adding ", deflated, "to history");
+    console.log("Adding ", deflated, "to history");
     setPaintLayerHistory(deflated);
+    // This gets set in the effect
     _setPaintLayers(layers);
   }
   let beginUndo = () => {
     let deflated = deflate(paintLayers);
     setPaintLayerHistory(deflated);
-    // console.log("Begun undo");
+    console.log("Begun undo");
   };
   const [clipboard, setClipboard] = useState<Paint[] | null>(null);
-
-  // React.useEffect(() => {
-  //   console.log("Paint layers changed to ", paintLayers)
-  // }, [paintLayers]);
-  React.useEffect(() => {
-    // console.log("History has changed")
-    // dumpHistory();
-    if (font) {
+  let undo = () => {
+    _undo();
+    if (font && paintLayerHistory) {
       let layers = inflate(paintLayerHistory, font);
-      // console.log("Setting layers to ", layers);
+      console.log("Setting layers to ", layers);
       _setPaintLayers(layers);
+    }
+  };
+  let redo = () => {
+    _redo();
+    if (font && paintLayerHistory) {
+      let layers = inflate(paintLayerHistory, font);
+      console.log("Setting layers to ", layers);
+      _setPaintLayers(layers);
+    }
+  };
+  React.useEffect(() => {
+    console.log("Paint layers changed to ", paintLayers)
+  }, [paintLayers]);
+  React.useEffect(() => {
+    console.log("History has changed")
+    dumpHistory();
+    if (font && paintLayerHistory) {
+      let current = deflate(paintLayers);
+      if (current !== paintLayerHistory) {
+        let layers = inflate(paintLayerHistory, font);
+        console.log("Setting layers to ", layers);
+      }
+    //   _setPaintLayers(layers);
+    } else {
+      _setPaintLayers([]);
     }
   }, [paintLayerHistory]);
 
@@ -85,7 +106,7 @@ export default function App() {
       // console.log("Setting layers to ", newLayers);
       setPaintLayers(newLayers);
       selectLayer(null);
-      clearHistory();
+      clearHistory(deflate(newLayers));
       selectGid(gid);
     }
   }
