@@ -278,11 +278,10 @@ export default function LayerTree(props: LayerTreeProps) {
 
 
     return (
-        <Accordion sx={{ width: '100%' }} defaultExpanded={props.font !== null} disabled={!props.font}>
+        <Accordion sx={{ width: '100%' }} expanded={true} disabled={!props.font}>
             <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
             >
-                <Typography variant="h6">Layers</Typography>
+                <Typography variant="h6">Paints</Typography>
             </AccordionSummary>
             <AccordionDetails>
                 <Paper sx={{
@@ -377,10 +376,14 @@ export default function LayerTree(props: LayerTreeProps) {
                         <IconButton disabled={!props.font} onClick={
                             () => {
                                 props.beginUndo();
+                                let newmatrix = new Matrix();
+                                if (props.paintLayers && props.paintLayers.length > 0) {
+                                    newmatrix = props.paintLayers![0].current_matrix.clone().translate(10,-10);
+                                }
                                 props.paintLayers!.splice(0, 0, new Paint(
                                     SELF_GID,
                                     SolidBlackFill(props.font!),
-                                    new Matrix(),
+                                    newmatrix,
                                     props.font!,
                                     props.selectedGid!
                                 ));
