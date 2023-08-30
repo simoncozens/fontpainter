@@ -190,11 +190,12 @@ export class RadialGradientFill {
         }
         let start_circle = wireframe.circle(this.current_radius0 * 2).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0, "fill": colorline[0], "fill-opacity": 0.2 });
         let end_circle = wireframe.circle(this.current_radius1 * 2).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x1, "cy": this.current_y1, "fill": colorline[100], "fill-opacity": 0.2 });
-        let start_radius_handle = wireframe.circle(10).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0 + this.current_radius0, "fill": "white" });
-        let end_radius_handle = wireframe.circle(10).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x1, "cy": this.current_y1 + this.current_radius1, "fill": "white" });
+        let zf = 1;
+        let start_radius_handle = wireframe.circle(15 * zf).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0 + this.current_radius0, "fill": "white" });
+        let end_radius_handle = wireframe.circle(15 * zf).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x1, "cy": this.current_y1 + this.current_radius1, "fill": "white" });
 
-        let start = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0, "fill": colorline[0] || "black" });
-        let end = wireframe.circle(15).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x1, "cy": this.current_y1, "fill": colorline[100] || "black" });
+        let start = wireframe.circle(20 * zf).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x0, "cy": this.current_y0, "fill": colorline[0] || "black" });
+        let end = wireframe.circle(20 * zf).attr({ "stroke": "black", "stroke-width": 0.5, "cx": this.current_x1, "cy": this.current_y1, "fill": colorline[100] || "black" });
 
         let line = wireframe.line(start.cx(), start.cy(), end.cx(), end.cy()).attr({ "stroke": "black", "stroke-width": 0.5 }).id("wireframe-line");
         let balls = wireframe.group();
