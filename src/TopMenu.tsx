@@ -61,10 +61,10 @@ function FontDrop(props: FontDropProps) {
 interface TopMenuProps {
     setFont: React.Dispatch<React.SetStateAction<PainterFont | null>>,
     font: PainterFont | null,
-    undo: (font: PainterFont) => boolean,
-    redo: (font: PainterFont) => boolean,
-    canUndo: () => boolean,
-    canRedo: () => boolean,
+    undo: () => void,
+    redo: () => void,
+    canUndo: boolean,
+    canRedo: boolean,
 }
 
 export default function TopMenu(props: TopMenuProps) {
@@ -117,15 +117,13 @@ export default function TopMenu(props: TopMenuProps) {
     }
 
     const handleUndo = () => {
-        if (props.font && props.undo(props.font!)) {
-            openSnack("Undo successful");
-        }
+        props.undo();
+        openSnack("Undo successful");
     }
 
     const handleRedo = () => {
-        if (props.font && props.redo(props.font!)) {
-            openSnack("Redo successful");
-        }
+        props.redo();
+        openSnack("Redo successful");
     }
     return (
         <AppBar position="static">
@@ -159,10 +157,10 @@ export default function TopMenu(props: TopMenuProps) {
                 </Typography>
                 <Chip label="alpha" color="error" />
                 <Box sx={{ flexGrow: 1 }} />
-                <IconButton disabled={!props.font || !props.canUndo()} onClick={handleUndo}>
+                <IconButton disabled={!props.font || !props.canUndo} onClick={handleUndo}>
                     <Undo />
                 </IconButton>
-                <IconButton disabled={!props.font || !props.canRedo()} onClick={handleRedo}>
+                <IconButton disabled={!props.font || !props.canRedo} onClick={handleRedo}>
                     <Redo />
                 </IconButton>
                 <Box sx={{ flexGrow: 1 }} />

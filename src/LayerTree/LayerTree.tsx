@@ -228,7 +228,7 @@ interface LayerTreeProps {
     beginUndo: () => void,
     font: PainterFont | null,
     selectedGid: number | null,
-    setPaintLayers: (layers: Paint[], doSnapshot: boolean) => void,
+    setPaintLayers: (layers: Paint[]) => void,
     clipboard: Paint[] | null,
     setClipboard: React.Dispatch<React.SetStateAction<Paint[] | null>>,
     selectVariableThing: React.Dispatch<React.SetStateAction<VariableThing<any> | null>>
@@ -259,7 +259,7 @@ export default function LayerTree(props: LayerTreeProps) {
             props.beginUndo();
             props.paintLayers![props.selectedLayer].blendMode = event.target.value as BlendMode;
             setBlendMode(event.target.value as BlendMode)
-            props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!), false);
+            props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!));
             props.selectLayer(props.selectedLayer)
         }
     }
@@ -273,7 +273,7 @@ export default function LayerTree(props: LayerTreeProps) {
         } else {
             paints.splice(parseInt(nodeId) + 1, 0, paints.splice(draggingId, 1)[0]);
         }
-        props.setPaintLayers(([] as Paint[]).concat(paints), false);
+        props.setPaintLayers(([] as Paint[]).concat(paints));
     }
 
 
@@ -337,7 +337,7 @@ export default function LayerTree(props: LayerTreeProps) {
                         label={(props.paintLayers!.length - i).toString()}
                         paint={p}
                         redrawPaints={() => {
-                            props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!), true);
+                            props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!));
                         }}
                         onDragStart={(ev) => {
                             draggingId = i;
@@ -363,7 +363,7 @@ export default function LayerTree(props: LayerTreeProps) {
                                 if (props.selectedLayer !== null) {
                                     props.beginUndo();
                                     props.paintLayers!.splice(props.selectedLayer, 1);
-                                    props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!), false);
+                                    props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!));
                                     props.selectLayer(null);
                                 }
                             }}
@@ -384,7 +384,7 @@ export default function LayerTree(props: LayerTreeProps) {
                                     props.font!,
                                     props.selectedGid!
                                 ));
-                                props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!), false);
+                                props.setPaintLayers(([] as Paint[]).concat(props.paintLayers!));
                                 props.selectLayer(0);
                             }
                         } >
@@ -408,7 +408,7 @@ export default function LayerTree(props: LayerTreeProps) {
                                 props.beginUndo();
                                 let clonedFromClipboard = props.clipboard!.map(p => p.clone())
                                 props.font!.paints.set(props.selectedGid!, clonedFromClipboard)
-                                props.setPaintLayers(clonedFromClipboard, false);
+                                props.setPaintLayers(clonedFromClipboard);
                                 props.font!.updatePalette();
                                 props.selectLayer(null);
                             }}
