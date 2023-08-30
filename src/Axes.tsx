@@ -1,7 +1,7 @@
 import { Axis, PainterFont } from './font/Font';
 import * as React from 'react';
 import Typography from '@mui/material/Typography';
-import Slider from '@mui/material/Slider';
+import Slider, { SliderProps } from '@mui/material/Slider';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -28,25 +28,27 @@ interface AxisSliderProps {
     refresh: () => void
 }
 
-function AxisSlider(props: AxisSliderProps) {
-    let range = Math.abs(props.axis.max - props.axis.min);
+function AxisSlider(props: AxisSliderProps & SliderProps) {
+    let { font, axis, selectedVariableThing, refresh, ...sliderProps } = props;
+
+    let range = Math.abs(axis.max - axis.min);
     let snap = 0.02
-    const [value, setValue] = React.useState(props.axis.default);
+    const [value, setValue] = React.useState(axis.default);
     let marks = [
-        { value: props.axis.min },
-        { value: props.axis.default },
-        { value: props.axis.max },
+        { value: axis.min },
+        { value: axis.default },
+        { value: axis.max },
     ]
-    if (props.selectedVariableThing) {
-        for (var loc of props.selectedVariableThing.locations(props.axis)) {
+    if (selectedVariableThing) {
+        for (var loc of selectedVariableThing.locations(axis)) {
             marks.push({ value: loc })
         }
 
     }
     return <Slider
         value={value}
-        min={props.axis.min}
-        max={props.axis.max}
+        min={axis.min}
+        max={axis.max}
         marks={marks}
         onChange={(event, newValue) => {
             let v = newValue as number;
@@ -56,18 +58,20 @@ function AxisSlider(props: AxisSliderProps) {
                 }
             }
             setValue(v)
-            props.font!.variations[props.axis.tag] = v as number;
-            props.font!.setVariations();
-            props.refresh();
+            font!.variations[axis.tag] = v as number;
+            font!.setVariations();
+            refresh();
         }}
-        aria-labelledby="continuous-slider" />
+        aria-labelledby="continuous-slider"
+        {...sliderProps}
+        />
 }
 
 const StyledAxisSlider = styled(AxisSlider)(({ theme }) => ({
     '& .MuiSlider-mark': {
         backgroundColor: '#bfbfbf',
-        height: 8,
-        width: 1,
+        height: 10,
+        width: 4,
         '&.MuiSlider-markActive': {
             opacity: 1,
             backgroundColor: 'currentColor',
