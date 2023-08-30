@@ -144,7 +144,7 @@ export class Paint {
 
     public get label(): string {
         if (this.gid == SELF_GID) {
-            return "<Self>"
+            return "<This Glyph>"
         }
         if (this.gid == null) {
             return "<None>"

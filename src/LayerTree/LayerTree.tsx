@@ -165,7 +165,7 @@ function TopTreeItem(props: StyledTreeItemProps) {
                         {renaming && props.font ?
                             <Autocomplete
                                 options={[
-                                    { id: SELF_GID, name: "<Self>", unicode: null },
+                                    { id: SELF_GID, name: "<This Glyph>", unicode: null },
                                     ...props.font!.glyphInfos()
                                 ]}
                                 getOptionLabel={(option) => option.name}
