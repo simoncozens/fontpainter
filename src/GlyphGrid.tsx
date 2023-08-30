@@ -13,6 +13,11 @@ interface GlyphGridProps {
 }
 
 export function GlyphGrid(props: GlyphGridProps) {
+    const [open, setOpen] = React.useState<undefined|boolean>(undefined);
+    if (props.font && open == undefined) {
+        setOpen(true);
+    }
+
     const columns: GridColDef[] = [
         { field: 'id', headerName: 'GID', width: 10 },
         { field: 'name', headerName: 'Name', flex: 1 },
@@ -31,7 +36,9 @@ export function GlyphGrid(props: GlyphGridProps) {
     }
     return (
         <Accordion sx={{ width: '100%' }} disabled={!props.font}
-            defaultExpanded={props.font != null}> 
+            expanded={open || false}
+            onChange={() => setOpen(!open)}
+            >
             <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
             >
